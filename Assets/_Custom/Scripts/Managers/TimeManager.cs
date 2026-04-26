@@ -1,18 +1,23 @@
+using System;
 using UnityEngine;
 
 public class TimeManager : MonoBehaviour
 {
     public static TimeManager Instance { get; private set; }
 
-    [Header("Time Config")]
-    [Tooltip("Tiempo límite máximo que el jugador puede acumular.")]
-    public float maxTime = 100f;
-    [Tooltip("Tiempo inicial al comenzar la partida.")]
-    public float startingTime = 60f;
-    [Tooltip("Cuántas unidades de tiempo se drenan por segundo real.")]
-    public float timeDrainRate = 1f;
+    public const float TIME_START = 30f;
+    public const float TIME_MAX = 45f;
+    public const float TIME_DRAIN = 1f;
+    public const float TIME_PENALTY = 5f;
 
     public float CurrentTime { get; private set; }
+    
+    private float drainMultiplier = 1.0f;
+    private bool criticalStateNotified = false;
+
+    public event Action<float> OnTimeChanged;
+    public event Action OnTimeCritical;
+    public event Action OnTimeOut;
 
     private void Awake()
     {
@@ -27,17 +32,27 @@ public class TimeManager : MonoBehaviour
 
     private void Start()
     {
-        CurrentTime = startingTime;
+        CurrentTime = TIME_START;
     }
 
     private void Update()
     {
-        // Solo drenar el tiempo si estamos en estado "Playing"
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
             return;
 
-        // Drenaje pasivo
-        CurrentTime -= timeDrainRate * Time.deltaTime;
+        CurrentTime -= TIME_DRAIN * drainMultiplier * Time.deltaTime;
+        
+        OnTimeChanged?.Invoke(CurrentTime);
+
+        if (CurrentTime <= 5f && !criticalStateNotified)
+        {
+            criticalStateNotified = true;
+            OnTimeCritical?.Invoke();
+        }
+        else if (CurrentTime > 5f && criticalStateNotified)
+        {
+            criticalStateNotified = false;
+        }
 
         CheckGameOverCondition();
     }
@@ -45,17 +60,23 @@ public class TimeManager : MonoBehaviour
     public void AddTime(float amount)
     {
         CurrentTime += amount;
-        
-        if (CurrentTime > maxTime)
+        if (CurrentTime > TIME_MAX)
         {
-            CurrentTime = maxTime;
+            CurrentTime = TIME_MAX;
         }
+        OnTimeChanged?.Invoke(CurrentTime);
     }
 
     public void SubtractTime(float amount)
     {
         CurrentTime -= amount;
+        OnTimeChanged?.Invoke(CurrentTime);
         CheckGameOverCondition();
+    }
+
+    public void SetDrainMultiplier(float multiplier)
+    {
+        drainMultiplier = multiplier;
     }
 
     private void CheckGameOverCondition()
@@ -63,10 +84,11 @@ public class TimeManager : MonoBehaviour
         if (CurrentTime <= 0f)
         {
             CurrentTime = 0f;
+            OnTimeOut?.Invoke();
             
             if (GameManager.Instance != null)
             {
-                GameManager.Instance.EndGame();
+                GameManager.Instance.TriggerGameOver();
             }
         }
     }

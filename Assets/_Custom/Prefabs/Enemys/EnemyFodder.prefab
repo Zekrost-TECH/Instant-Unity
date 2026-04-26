@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 5846464551589510652}
   - component: {fileID: 785346505017970004}
   m_Layer: 6
-  m_Name: "Enemy(Reba\xF1o)"
+  m_Name: EnemyFodder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
