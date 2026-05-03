@@ -13,6 +13,7 @@ public class TimeManager : MonoBehaviour
     public float CurrentTime { get; private set; }
     
     private float drainMultiplier = 1.0f;
+    public float PermanentDrainModifier = 1.0f;
     private bool criticalStateNotified = false;
 
     public event Action<float> OnTimeChanged;
@@ -40,7 +41,7 @@ public class TimeManager : MonoBehaviour
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
             return;
 
-        CurrentTime -= TIME_DRAIN * drainMultiplier * Time.deltaTime;
+        CurrentTime -= TIME_DRAIN * drainMultiplier * PermanentDrainModifier * Time.deltaTime;
         
         OnTimeChanged?.Invoke(CurrentTime);
 

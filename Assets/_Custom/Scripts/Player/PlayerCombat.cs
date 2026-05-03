@@ -1,5 +1,5 @@
 using UnityEngine;
-using System.Collections;
+using MoreMountains.Feedbacks;
 
 [RequireComponent(typeof(PlayerMovement))]
 public class PlayerCombat : MonoBehaviour
@@ -11,11 +11,16 @@ public class PlayerCombat : MonoBehaviour
     public float attackRate = 0.6f;
     [Tooltip("Radio máximo en el que el jugador detecta enemigos.")]
     public float attackRange = 3f;
-    [Tooltip("Penalización de tiempo al recibir daño de un enemigo.")]
+    [Tooltip("Penalización de tiempo al recibir daño de un enemigo (cuerpo a cuerpo).")]
     public float hitTimePenalty = 5f;
 
+    [Header("Game Feel (FEEL Asset)")]
+    [Tooltip("Feedback al asestar un golpe a un enemigo (Hit-stop, partículas, sonido).")]
+    public MMF_Player hitEnemyFeedback;
+    [Tooltip("Feedback al recibir daño de un enemigo o proyectil (Screen Shake, flash rojo).")]
+    public MMF_Player takeDamageFeedback;
+
     [Header("Gizmos")]
-    [Tooltip("Color del círculo de rango de ataque en el Editor.")]
     public Color rangeGizmoColor = new Color(1f, 0.4f, 0f, 0.35f);
 
     private PlayerMovement movement;
@@ -48,33 +53,32 @@ public class PlayerCombat : MonoBehaviour
         if (target != null)
         {
             target.OnHit(attackDamage);
+            
+            // Jugar GameFeel: Hit-Stop, sonido de hit
+            if (hitEnemyFeedback != null) hitEnemyFeedback.PlayFeedbacks();
         }
     }
 
-    /// <summary>
-    /// Llamado por EnemyBase cuando un enemigo toca al jugador.
-    /// Aplica la penalización de tiempo y activa el periodo de invulnerabilidad.
-    /// </summary>
-    public void TakeDamageFromEnemy()
+    public void TakeDamageFromEnemy(float customDamage = 0f)
     {
         if (movement.IsInvulnerable) return;
         if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameManager.GameState.Playing) return;
 
-        TimeManager.Instance.SubtractTime(hitTimePenalty);
+        float damageToApply = customDamage > 0f ? customDamage : hitTimePenalty;
+        TimeManager.Instance.SubtractTime(damageToApply);
         movement.TriggerHitInvulnerability();
 
-        Debug.Log($"¡Ouch! El enemigo te golpeó. -{hitTimePenalty}s");
+        // Jugar GameFeel: Screen Shake, impacto visual fuerte
+        if (takeDamageFeedback != null) takeDamageFeedback.PlayFeedbacks();
+
+        Debug.Log($"¡Ouch! Te golpearon. -{damageToApply}s");
     }
 
-    // ── Gizmos ──────────────────────────────────────────────────────────────
-
-    // Se dibuja siempre visible en la Scene View (no solo al seleccionar).
     private void OnDrawGizmos()
     {
         Gizmos.color = rangeGizmoColor;
         Gizmos.DrawSphere(transform.position, attackRange);
 
-        // Borde sólido para definir con precisión el límite del rango
         Gizmos.color = new Color(rangeGizmoColor.r, rangeGizmoColor.g, rangeGizmoColor.b, 1f);
         Gizmos.DrawWireSphere(transform.position, attackRange);
     }
