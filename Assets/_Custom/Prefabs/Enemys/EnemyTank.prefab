@@ -471,9 +471,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b750c0a6045a0a49a3f147702b679c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyTank
-  maxHealth: 1
+  maxHealth: 10
   timeRewardOnDeath: 3
   timeDamageToPlayer: 5
   isElite: 0
+  dieOnContactWithPlayer: 0
   damageFeedback: {fileID: 2277499809786878653}
   moveSpeed: 1.5

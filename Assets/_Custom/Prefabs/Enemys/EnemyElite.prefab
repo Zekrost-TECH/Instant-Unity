@@ -183,10 +183,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52620345b1b34a240b24f8d56eb794c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyShooter
-  maxHealth: 10
+  maxHealth: 30
   timeRewardOnDeath: 10
   timeDamageToPlayer: 5
   isElite: 1
+  dieOnContactWithPlayer: 0
+  damageFeedback: {fileID: 0}
   moveSpeed: 2.5
   shootCooldown: 2
   stoppingDistance: 4

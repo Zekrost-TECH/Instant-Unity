@@ -4,7 +4,7 @@ public class EnemyFodder : EnemyBase
 {
     [Header("Fodder Behavior")]
     [Tooltip("Velocidad de persecución en línea recta hacia el jugador.")]
-    public float moveSpeed = 3f;
+    public float moveSpeed = 1.6f;
 
     protected override void UpdateMovement()
     {

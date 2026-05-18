@@ -4,7 +4,7 @@ public class EnemyFast : EnemyBase
 {
     [Header("Fast Behavior")]
     [Tooltip("Velocidad de persecución (más rápida que el Fodder).")]
-    public float moveSpeed = 6f;
+    public float moveSpeed = 3.2f;
     [Tooltip("Frecuencia del zigzag.")]
     public float zigzagFrequency = 2f;
     [Tooltip("Amplitud del zigzag.")]

@@ -4,7 +4,7 @@ public class EnemyElite : EnemyBase
 {
     [Header("Elite Behavior")]
     [Tooltip("Velocidad de persecución.")]
-    public float moveSpeed = 2.5f;
+    public float moveSpeed = 1.4f;
 
     protected override void Awake()
     {

@@ -6,13 +6,15 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
 {
     [Header("Base Stats")]
     [Tooltip("Vida máxima del enemigo.")]
-    public int maxHealth = 1;
+    public int maxHealth = 2;
     [Tooltip("Tiempo (segundos) que se le suma al jugador al morir.")]
-    public float timeRewardOnDeath = 3f;
+    public float timeRewardOnDeath = 0.5f;
     [Tooltip("Tiempo (segundos) que se le resta al jugador al tocarlo.")]
     public float timeDamageToPlayer = 5f;
     [Tooltip("Si es true, este enemigo cuenta como élite al morir.")]
     public bool isElite = false;
+    [Tooltip("Si es true, este enemigo morirá instantáneamente al tocar al jugador (tipo kamikaze).")]
+    public bool dieOnContactWithPlayer = false;
 
     [Header("Game Feel")]
     public MMF_Player damageFeedback;
@@ -20,6 +22,8 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     protected int currentHealth;
     protected Rigidbody2D rb;
     protected Transform playerTransform;
+
+    private static Transform cachedPlayerTransform;
 
     // ── Lifecycle ────────────────────────────────────────────────────────────
 
@@ -38,12 +42,13 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     {
         currentHealth = maxHealth;
 
-        // Cacheamos al jugador si aún no lo tenemos
-        if (playerTransform == null)
+        // Cacheamos al jugador usando una referencia estática para evitar FindGameObjectWithTag repetitivos
+        if (cachedPlayerTransform == null)
         {
             GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-            if (playerObj != null) playerTransform = playerObj.transform;
+            if (playerObj != null) cachedPlayerTransform = playerObj.transform;
         }
+        playerTransform = cachedPlayerTransform;
 
         // Registramos en EnemyManager
         if (EnemyManager.Instance != null)
@@ -95,31 +100,51 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
 
     // ── Muerte ───────────────────────────────────────────────────────────────
 
-    protected virtual void Die()
+    protected virtual void Die(bool giveReward = true, bool isKill = true)
     {
         // 1. Suma tiempo al jugador
-        if (TimeManager.Instance != null)
+        if (giveReward && TimeManager.Instance != null)
             TimeManager.Instance.AddTime(timeRewardOnDeath);
 
-        // 2. Notifica al EnemyManager (esto dispara OnEnemyKilled, OnKillCountChanged)
+        // 2. Notifica al EnemyManager
         if (EnemyManager.Instance != null)
-            EnemyManager.Instance.NotifyEnemyDeath(this, isElite);
+        {
+            if (isKill)
+                EnemyManager.Instance.NotifyEnemyDeath(this, isElite);
+            else
+                EnemyManager.Instance.UnregisterEnemy(this);
+        }
 
         // 3. Devuelve el objeto al pool — NUNCA se llama a Destroy()
         if (SpawnManager.Instance != null)
             SpawnManager.Instance.ReleaseEnemy(this);
     }
 
-    // ── Contacto con el jugador ──────────────────────────────────────────────
+    protected virtual void OnTriggerEnter2D(Collider2D other)
+    {
+        HandlePlayerContact(other);
+    }
 
     protected virtual void OnTriggerStay2D(Collider2D other)
+    {
+        HandlePlayerContact(other);
+    }
+
+    private void HandlePlayerContact(Collider2D other)
     {
         if (!other.CompareTag("Player")) return;
 
         PlayerCombat playerCombat = other.GetComponent<PlayerCombat>();
         if (playerCombat != null)
         {
-            playerCombat.TakeDamageFromEnemy();
+            // Registramos si logramos hacer daño real al jugador (retorna falso si es invulnerable)
+            bool damageDealt = playerCombat.TakeDamageFromEnemy(timeDamageToPlayer);
+
+            if (dieOnContactWithPlayer && damageDealt)
+            {
+                // Si muere por chocar al jugador e infligir daño, no le da tiempo al jugador ni cuenta como baja
+                Die(giveReward: false, isKill: false);
+            }
         }
     }
 }

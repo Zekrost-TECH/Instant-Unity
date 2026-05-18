@@ -20,6 +20,16 @@ public class PlayerMovement : MonoBehaviour
     [Tooltip("Tiempo de inmunidad en segundos después de recibir un golpe de un enemigo.")]
     public float hitInvulnerabilityDuration = 1f;
 
+    [Header("Play Area Boundary")]
+    [Tooltip("Si es true, la zona se adaptará automáticamente a los bordes de la cámara en pantalla.")]
+    public bool bindToCameraViewport = true;
+    [Tooltip("Margen de seguridad para que el jugador no asome fuera de la pantalla.")]
+    public float screenBorderPadding = 0.6f;
+    [Tooltip("El ancho total de la zona jugable rectangular (si bindToCameraViewport es false).")]
+    public float playAreaWidth = 28f;
+    [Tooltip("El alto total de la zona jugable rectangular (si bindToCameraViewport es false).")]
+    public float playAreaHeight = 16f;
+
     private Rigidbody2D rb;
     private PlayerInput playerInput;
     private Vector2 lastMoveDirection = Vector2.up;
@@ -29,6 +39,7 @@ public class PlayerMovement : MonoBehaviour
     private float dashCooldownCounter;
     private float hitInvulnerabilityCounter; 
     private Vector2 dashDirection;
+    private Camera mainCamera;
 
     public bool IsInvulnerable => isDashing || hitInvulnerabilityCounter > 0f;
 
@@ -36,6 +47,7 @@ public class PlayerMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         playerInput = GetComponent<PlayerInput>();
+        mainCamera = Camera.main;
         
         rb.gravityScale = 0f;
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
@@ -93,6 +105,36 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.linearVelocity = playerInput.MoveInput.normalized * moveSpeed;
         }
+
+        // Aplicar límite de zona jugable rectangular (dinámica con la cámara o fija)
+        Vector2 nextPosition = rb.position + rb.linearVelocity * Time.fixedDeltaTime;
+        float halfWidth, halfHeight;
+        Vector2 centerPoint = Vector2.zero;
+
+        if (bindToCameraViewport && mainCamera != null)
+        {
+            halfHeight = mainCamera.orthographicSize - screenBorderPadding;
+            halfWidth = (mainCamera.orthographicSize * mainCamera.aspect) - screenBorderPadding;
+            centerPoint = mainCamera.transform.position;
+        }
+        else
+        {
+            halfWidth = playAreaWidth / 2f;
+            halfHeight = playAreaHeight / 2f;
+        }
+
+        // Clampar posición física en los ejes X y Y de forma independiente
+        float clampedX = Mathf.Clamp(nextPosition.x, centerPoint.x - halfWidth, centerPoint.x + halfWidth);
+        float clampedY = Mathf.Clamp(nextPosition.y, centerPoint.y - halfHeight, centerPoint.y + halfHeight);
+        rb.position = new Vector2(clampedX, clampedY);
+
+        // Cancelar velocidad exterior en los bordes para permitir deslizamiento suave en las esquinas y lados
+        Vector2 currentVelocity = rb.linearVelocity;
+        if (nextPosition.x > centerPoint.x + halfWidth && currentVelocity.x > 0f) currentVelocity.x = 0f;
+        if (nextPosition.x < centerPoint.x - halfWidth && currentVelocity.x < 0f) currentVelocity.x = 0f;
+        if (nextPosition.y > centerPoint.y + halfHeight && currentVelocity.y > 0f) currentVelocity.y = 0f;
+        if (nextPosition.y < centerPoint.y - halfHeight && currentVelocity.y < 0f) currentVelocity.y = 0f;
+        rb.linearVelocity = currentVelocity;
     }
 
     private void TryStartDash()
@@ -132,5 +174,25 @@ public class PlayerMovement : MonoBehaviour
     public void TriggerHitInvulnerability()
     {
         hitInvulnerabilityCounter = hitInvulnerabilityDuration;
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.cyan;
+        Camera cam = mainCamera != null ? mainCamera : Camera.main;
+
+        if (bindToCameraViewport && cam != null)
+        {
+            float halfHeight = cam.orthographicSize - screenBorderPadding;
+            float halfWidth = (cam.orthographicSize * cam.aspect) - screenBorderPadding;
+            Vector3 camPos = cam.transform.position;
+            camPos.z = 0f;
+            Gizmos.DrawWireCube(camPos, new Vector3(halfWidth * 2f, halfHeight * 2f, 0f));
+        }
+        else
+        {
+            // Dibujar un cubo de alambre representando el límite de la zona jugable rectangular fija
+            Gizmos.DrawWireCube(Vector3.zero, new Vector3(playAreaWidth, playAreaHeight, 0f));
+        }
     }
 }

@@ -106,17 +106,27 @@ public class SpawnManager : MonoBehaviour
 
     private float GetSpawnRate(float t)
     {
-        float rate = 1.0f - (Mathf.Floor(t / 30f) * 0.12f);
-        return Mathf.Max(rate, 0.25f);
+        // Iniciamos en un tempo más pausado y bajamos hasta un ritmo limpio pero tenso (0.5s)
+        float rate = 1.2f - (t * 0.004f);
+        return Mathf.Max(rate, 0.45f);
     }
 
     private void SpawnEnemy()
     {
-        ObjectPool<EnemyBase> poolToUse = DetermineEnemyPool(gameTime);
-        if (poolToUse == null) return;
+        // Spawnea cantidades más moderadas de enemigos (1 a 3 como máximo)
+        // 0-45s -> 1 enemigo. 45s-90s -> 1-2 enemigos. 90s+ -> 2-3 enemigos a la vez.
+        int baseCount = 1 + Mathf.FloorToInt(gameTime / 45f);
+        int spawnCount = Random.Range(baseCount, baseCount + 2);
+        spawnCount = Mathf.Clamp(spawnCount, 1, 3); // Clampeado entre 1 y 3 para evitar amontonamiento y lag
 
-        EnemyBase enemy = poolToUse.Get();
-        enemy.transform.position = GetSpawnPosition();
+        for (int i = 0; i < spawnCount; i++)
+        {
+            ObjectPool<EnemyBase> poolToUse = DetermineEnemyPool(gameTime);
+            if (poolToUse == null) continue;
+
+            EnemyBase enemy = poolToUse.Get();
+            enemy.transform.position = GetSpawnPosition();
+        }
     }
 
     private void SpawnElite()

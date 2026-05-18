@@ -3,7 +3,7 @@ using UnityEngine;
 public class EnemyShooter : EnemyBase
 {
     [Header("Shooter Behavior")]
-    public float moveSpeed = 2f;
+    public float moveSpeed = 1.2f;
     public float shootCooldown = 3f;
     public float stoppingDistance = 5f;
     public float retreatDistance = 3f;

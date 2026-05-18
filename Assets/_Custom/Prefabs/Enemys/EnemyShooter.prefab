@@ -187,6 +187,8 @@ MonoBehaviour:
   timeRewardOnDeath: 3
   timeDamageToPlayer: 5
   isElite: 0
+  dieOnContactWithPlayer: 0
+  damageFeedback: {fileID: 0}
   moveSpeed: 2
   shootCooldown: 3
   stoppingDistance: 5

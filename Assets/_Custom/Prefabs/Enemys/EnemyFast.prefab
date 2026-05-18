@@ -137,6 +137,8 @@ MonoBehaviour:
   timeRewardOnDeath: 3
   timeDamageToPlayer: 5
   isElite: 0
+  dieOnContactWithPlayer: 1
+  damageFeedback: {fileID: 0}
   moveSpeed: 6
   zigzagFrequency: 2
   zigzagAmplitude: 2

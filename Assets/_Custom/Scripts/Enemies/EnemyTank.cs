@@ -4,7 +4,7 @@ public class EnemyTank : EnemyBase
 {
     [Header("Tank Behavior")]
     [Tooltip("Velocidad de persecución (más lenta que el Fodder).")]
-    public float moveSpeed = 1.5f;
+    public float moveSpeed = 0.8f;
 
     protected override void UpdateMovement()
     {

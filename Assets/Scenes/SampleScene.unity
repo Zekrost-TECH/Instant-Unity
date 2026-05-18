@@ -620,7 +620,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 7
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -1624,6 +1624,8 @@ MonoBehaviour:
   dashDuration: 0.2
   dashCooldown: 1
   hitInvulnerabilityDuration: 1
+  playAreaWidth: 35
+  playAreaHeight: 13
 --- !u!4 &1267034131
 Transform:
   m_ObjectHideFlags: 0

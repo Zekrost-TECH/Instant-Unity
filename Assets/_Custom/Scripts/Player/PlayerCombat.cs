@@ -100,10 +100,10 @@ public class PlayerCombat : MonoBehaviour
         }
     }
 
-    public void TakeDamageFromEnemy(float customDamage = 0f)
+    public bool TakeDamageFromEnemy(float customDamage = 0f)
     {
-        if (movement.IsInvulnerable) return;
-        if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameManager.GameState.Playing) return;
+        if (movement.IsInvulnerable) return false;
+        if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameManager.GameState.Playing) return false;
 
         float damageToApply = customDamage > 0f ? customDamage : hitTimePenalty;
         TimeManager.Instance.SubtractTime(damageToApply);
@@ -113,6 +113,7 @@ public class PlayerCombat : MonoBehaviour
         if (takeDamageFeedback != null) takeDamageFeedback.PlayFeedbacks();
 
         Debug.Log($"¡Ouch! Te golpearon. -{damageToApply}s");
+        return true;
     }
 
     private void OnDrawGizmos()
