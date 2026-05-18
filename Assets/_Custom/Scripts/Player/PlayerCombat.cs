@@ -34,6 +34,14 @@ public class PlayerCombat : MonoBehaviour
     private void Awake()
     {
         movement = GetComponent<PlayerMovement>();
+    }
+
+    private void Start()
+    {
+        if (SaveManager.Instance != null)
+        {
+            attackRange *= (1f + SaveManager.Instance.AttackRangeLevel * 0.05f);
+        }
         lastRange = attackRange;
         UpdateRangeVisual();
     }

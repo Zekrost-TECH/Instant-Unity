@@ -53,6 +53,31 @@ public class PlayerMovement : MonoBehaviour
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
     }
 
+    private void Start()
+    {
+        if (SaveManager.Instance != null)
+        {
+            dashCooldown *= (1f - SaveManager.Instance.DashCooldownLevel * 0.08f);
+            ApplyEquippedSkin();
+        }
+    }
+
+    private void ApplyEquippedSkin()
+    {
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null && SaveManager.Instance != null)
+        {
+            switch (SaveManager.Instance.EquippedSkin)
+            {
+                case "Cyan": sr.color = Color.cyan; break;
+                case "Gold": sr.color = new Color(1f, 0.84f, 0f); break;
+                case "Purple": sr.color = new Color(0.6f, 0.2f, 0.8f); break;
+                case "Red": sr.color = Color.red; break;
+                case "Green": sr.color = Color.green; break;
+            }
+        }
+    }
+
     private void OnEnable()
     {
         playerInput.OnDashPressed += TryStartDash;

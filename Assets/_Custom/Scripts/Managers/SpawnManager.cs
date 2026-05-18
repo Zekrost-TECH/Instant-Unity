@@ -30,6 +30,8 @@ public class SpawnManager : MonoBehaviour
     private float spawnTimer = 0f;
     private float eliteTimer = 0f;
 
+    public float GameTime => gameTime;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)

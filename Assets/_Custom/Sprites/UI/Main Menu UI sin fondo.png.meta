@@ -1,0 +1,605 @@
+fileFormatVersion: 2
+guid: 3bc416d985a75eb4e8dc5fc85b00e14d
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 6718687240274399238
+    second: Main Menu UI sin fondo_0
+  - first:
+      213: -5253100981768218828
+    second: Main Menu UI sin fondo_1
+  - first:
+      213: -6758642110438020431
+    second: Main Menu UI sin fondo_2
+  - first:
+      213: -869169211247707098
+    second: Main Menu UI sin fondo_3
+  - first:
+      213: 239122365460645415
+    second: Main Menu UI sin fondo_4
+  - first:
+      213: -7483433152369770680
+    second: Main Menu UI sin fondo_5
+  - first:
+      213: -5497218442706078476
+    second: Main Menu UI sin fondo_6
+  - first:
+      213: -9117317484788705059
+    second: Main Menu UI sin fondo_7
+  - first:
+      213: -2590554873511570269
+    second: Main Menu UI sin fondo_8
+  - first:
+      213: 3961543240910485818
+    second: Main Menu UI sin fondo_9
+  - first:
+      213: 2414712050265031447
+    second: Main Menu UI sin fondo_10
+  - first:
+      213: 4000420664365467854
+    second: Main Menu UI sin fondo_11
+  - first:
+      213: 8613482808713454142
+    second: Main Menu UI sin fondo_12
+  - first:
+      213: 3648788115899375511
+    second: Main Menu UI sin fondo_13
+  - first:
+      213: -2604014563631314427
+    second: Main Menu UI sin fondo_14
+  - first:
+      213: 6950162588512634556
+    second: Main Menu UI sin fondo_15
+  - first:
+      213: 41437117487732985
+    second: Main Menu UI sin fondo_16
+  - first:
+      213: -2352939615845407604
+    second: Main Menu UI sin fondo_17
+  - first:
+      213: -5094185510508232762
+    second: Main Menu UI sin fondo_18
+  - first:
+      213: 2009465824288575662
+    second: Main Menu UI sin fondo_19
+  - first:
+      213: -2421928309048532924
+    second: Main Menu UI sin fondo_20
+  - first:
+      213: -3276625813721061198
+    second: Main Menu UI sin fondo_21
+  - first:
+      213: 3918764326759211352
+    second: Main Menu UI sin fondo_22
+  - first:
+      213: -6382229055444371078
+    second: Main Menu UI sin fondo_23
+  - first:
+      213: -4431404427590601562
+    second: Main Menu UI sin fondo_24
+  - first:
+      213: -4939249364037305439
+    second: Main Menu UI sin fondo_25
+  - first:
+      213: 6910754784920347286
+    second: Main Menu UI sin fondo_26
+  - first:
+      213: 3762507385412342181
+    second: Main Menu UI sin fondo_27
+  - first:
+      213: -3731472471035577099
+    second: Main Menu UI sin fondo_28
+  - first:
+      213: -5900590696068752461
+    second: Main Menu UI sin fondo_29
+  - first:
+      213: -468717350966177895
+    second: Main Menu UI sin fondo_30
+  - first:
+      213: 8690598428949782967
+    second: Main Menu UI sin fondo_31
+  - first:
+      213: 372749275638634234
+    second: Main Menu UI sin fondo_32
+  - first:
+      213: 5093482905955333163
+    second: Main Menu UI sin fondo_33
+  - first:
+      213: -8209076069308013393
+    second: Main Menu UI sin fondo_34
+  - first:
+      213: -867840847048527077
+    second: Main Menu UI sin fondo_35
+  - first:
+      213: 4743932181790766404
+    second: Main Menu UI sin fondo_36
+  - first:
+      213: -4554306613458185156
+    second: Main Menu UI sin fondo_37
+  - first:
+      213: -3622084510078568401
+    second: Main Menu UI sin fondo_38
+  - first:
+      213: -2793535980377622588
+    second: Main Menu UI sin fondo_39
+  - first:
+      213: 1219984751140003226
+    second: Main Menu UI sin fondo_40
+  - first:
+      213: -6347919337201131195
+    second: Main Menu UI sin fondo_41
+  - first:
+      213: 6637676380647437864
+    second: Main Menu UI sin fondo_42
+  - first:
+      213: 3193119547710703457
+    second: Main Menu UI sin fondo_43
+  - first:
+      213: -7605009885750794386
+    second: Main Menu UI sin fondo_44
+  - first:
+      213: -1176330914399840146
+    second: Main Menu UI sin fondo_45
+  - first:
+      213: -6003464096065776525
+    second: Main Menu UI sin fondo_46
+  - first:
+      213: -4532204352531696799
+    second: Main Menu UI sin fondo_47
+  - first:
+      213: 5584925594905990849
+    second: Main Menu UI sin fondo_48
+  - first:
+      213: 460789944446340560
+    second: Main Menu UI sin fondo_49
+  - first:
+      213: -4711918841545182582
+    second: Main Menu UI sin fondo_50
+  - first:
+      213: -1040030123058891763
+    second: Main Menu UI sin fondo_51
+  - first:
+      213: 5923894215611060018
+    second: Main Menu UI sin fondo_52
+  - first:
+      213: -6495238512163037108
+    second: Main Menu UI sin fondo_53
+  - first:
+      213: 2544224493674088691
+    second: Main Menu UI sin fondo_54
+  - first:
+      213: 8908672172346349065
+    second: Main Menu UI sin fondo_55
+  - first:
+      213: -6766015266030386849
+    second: Main Menu UI sin fondo_56
+  - first:
+      213: -8183858899175303174
+    second: Main Menu UI sin fondo_57
+  - first:
+      213: 5422667824452107055
+    second: Main Menu UI sin fondo_58
+  - first:
+      213: 6023290114400496935
+    second: Main Menu UI sin fondo_59
+  - first:
+      213: 6863693239068885308
+    second: Main Menu UI sin fondo_60
+  - first:
+      213: 7506424406106561936
+    second: Main Menu UI sin fondo_61
+  - first:
+      213: 2672176400969561119
+    second: Main Menu UI sin fondo_62
+  - first:
+      213: -4663027503837872027
+    second: Main Menu UI sin fondo_63
+  - first:
+      213: -108929593677726168
+    second: Main Menu UI sin fondo_64
+  - first:
+      213: 3493912336670688387
+    second: Main Menu UI sin fondo_65
+  - first:
+      213: 6024090039554252059
+    second: Main Menu UI sin fondo_66
+  - first:
+      213: -6388898671904356526
+    second: Main Menu UI sin fondo_67
+  - first:
+      213: 4208902856426378520
+    second: Main Menu UI sin fondo_68
+  - first:
+      213: 8663849940301238203
+    second: Main Menu UI sin fondo_69
+  - first:
+      213: -707434745639499346
+    second: Main Menu UI sin fondo_70
+  - first:
+      213: 1358699401941228112
+    second: Main Menu UI sin fondo_71
+  - first:
+      213: 6063999156293606587
+    second: Main Menu UI sin fondo_72
+  - first:
+      213: -2372305603698497363
+    second: Main Menu UI sin fondo_73
+  - first:
+      213: -8132185055400124839
+    second: Main Menu UI sin fondo_74
+  - first:
+      213: 2000422955156576501
+    second: Main Menu UI sin fondo_75
+  - first:
+      213: 1398519005199578325
+    second: Main Menu UI sin fondo_76
+  - first:
+      213: -2742065382605802803
+    second: Main Menu UI sin fondo_77
+  - first:
+      213: -5365813299976740205
+    second: Main Menu UI sin fondo_78
+  - first:
+      213: -6981654086461786273
+    second: Main Menu UI sin fondo_79
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Tittle
+      rect:
+        serializedVersion: 2
+        x: 43
+        y: 858
+        width: 552
+        height: 123
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6005189a2729d3d50800000000000000
+      internalID: 6718687240274399238
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Main Menu UI sin fondo_7
+      rect:
+        serializedVersion: 2
+        x: 1471
+        y: 905
+        width: 21
+        height: 17
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd816be9d08c87180800000000000000
+      internalID: -9117317484788705059
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: recordicon
+      rect:
+        serializedVersion: 2
+        x: 1153
+        y: 801
+        width: 49
+        height: 56
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ec8c2ab2669548730800000000000000
+      internalID: 4000420664365467854
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cronosicon
+      rect:
+        serializedVersion: 2
+        x: 1150
+        y: 690
+        width: 55
+        height: 54
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 851a4f6846f326630800000000000000
+      internalID: 3918764326759211352
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tiendaicon
+      rect:
+        serializedVersion: 2
+        x: 1144
+        y: 592
+        width: 59
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a79bf031d74cd67a0800000000000000
+      internalID: -6382229055444371078
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Main Menu UI sin fondo_79
+      rect:
+        serializedVersion: 2
+        x: 1088
+        y: 10
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f577ac7499e2c1f90800000000000000
+      internalID: -6981654086461786273
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play
+      rect:
+        serializedVersion: 2
+        x: 41
+        y: 655
+        width: 429
+        height: 161
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6fe75e6f9ea4df646bd495da76f310ba
+      internalID: 399426078
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 6a2d38b8f71536542b44183b2709822a
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Cronosicon: 3918764326759211352
+      Main Menu UI sin fondo_1: -5253100981768218828
+      Main Menu UI sin fondo_10: 2414712050265031447
+      Main Menu UI sin fondo_12: 8613482808713454142
+      Main Menu UI sin fondo_13: 3648788115899375511
+      Main Menu UI sin fondo_14: -2604014563631314427
+      Main Menu UI sin fondo_15: 6950162588512634556
+      Main Menu UI sin fondo_16: 41437117487732985
+      Main Menu UI sin fondo_17: -2352939615845407604
+      Main Menu UI sin fondo_18: -5094185510508232762
+      Main Menu UI sin fondo_19: 2009465824288575662
+      Main Menu UI sin fondo_2: -6758642110438020431
+      Main Menu UI sin fondo_20: -2421928309048532924
+      Main Menu UI sin fondo_21: -3276625813721061198
+      Main Menu UI sin fondo_24: -4431404427590601562
+      Main Menu UI sin fondo_25: -4939249364037305439
+      Main Menu UI sin fondo_26: 6910754784920347286
+      Main Menu UI sin fondo_27: 3762507385412342181
+      Main Menu UI sin fondo_28: -3731472471035577099
+      Main Menu UI sin fondo_29: -5900590696068752461
+      Main Menu UI sin fondo_3: -869169211247707098
+      Main Menu UI sin fondo_30: -468717350966177895
+      Main Menu UI sin fondo_31: 8690598428949782967
+      Main Menu UI sin fondo_32: 372749275638634234
+      Main Menu UI sin fondo_33: 5093482905955333163
+      Main Menu UI sin fondo_34: -8209076069308013393
+      Main Menu UI sin fondo_35: -867840847048527077
+      Main Menu UI sin fondo_36: 4743932181790766404
+      Main Menu UI sin fondo_37: -4554306613458185156
+      Main Menu UI sin fondo_38: -3622084510078568401
+      Main Menu UI sin fondo_39: -2793535980377622588
+      Main Menu UI sin fondo_4: 239122365460645415
+      Main Menu UI sin fondo_40: 1219984751140003226
+      Main Menu UI sin fondo_41: -6347919337201131195
+      Main Menu UI sin fondo_42: 6637676380647437864
+      Main Menu UI sin fondo_43: 3193119547710703457
+      Main Menu UI sin fondo_44: -7605009885750794386
+      Main Menu UI sin fondo_45: -1176330914399840146
+      Main Menu UI sin fondo_46: -6003464096065776525
+      Main Menu UI sin fondo_47: -4532204352531696799
+      Main Menu UI sin fondo_48: 5584925594905990849
+      Main Menu UI sin fondo_49: 460789944446340560
+      Main Menu UI sin fondo_5: -7483433152369770680
+      Main Menu UI sin fondo_50: -4711918841545182582
+      Main Menu UI sin fondo_51: -1040030123058891763
+      Main Menu UI sin fondo_52: 5923894215611060018
+      Main Menu UI sin fondo_53: -6495238512163037108
+      Main Menu UI sin fondo_54: 2544224493674088691
+      Main Menu UI sin fondo_55: 8908672172346349065
+      Main Menu UI sin fondo_56: -6766015266030386849
+      Main Menu UI sin fondo_57: -8183858899175303174
+      Main Menu UI sin fondo_58: 5422667824452107055
+      Main Menu UI sin fondo_59: 6023290114400496935
+      Main Menu UI sin fondo_6: -5497218442706078476
+      Main Menu UI sin fondo_60: 6863693239068885308
+      Main Menu UI sin fondo_61: 7506424406106561936
+      Main Menu UI sin fondo_62: 2672176400969561119
+      Main Menu UI sin fondo_63: -4663027503837872027
+      Main Menu UI sin fondo_64: -108929593677726168
+      Main Menu UI sin fondo_65: 3493912336670688387
+      Main Menu UI sin fondo_66: 6024090039554252059
+      Main Menu UI sin fondo_67: -6388898671904356526
+      Main Menu UI sin fondo_68: 4208902856426378520
+      Main Menu UI sin fondo_69: 8663849940301238203
+      Main Menu UI sin fondo_7: -9117317484788705059
+      Main Menu UI sin fondo_70: -707434745639499346
+      Main Menu UI sin fondo_71: 1358699401941228112
+      Main Menu UI sin fondo_72: 6063999156293606587
+      Main Menu UI sin fondo_73: -2372305603698497363
+      Main Menu UI sin fondo_74: -8132185055400124839
+      Main Menu UI sin fondo_75: 2000422955156576501
+      Main Menu UI sin fondo_76: 1398519005199578325
+      Main Menu UI sin fondo_77: -2742065382605802803
+      Main Menu UI sin fondo_78: -5365813299976740205
+      Main Menu UI sin fondo_79: -6981654086461786273
+      Main Menu UI sin fondo_8: -2590554873511570269
+      Main Menu UI sin fondo_9: 3961543240910485818
+      Tittle: 6718687240274399238
+      play: 399426078
+      recordicon: 4000420664365467854
+      tiendaicon: -6382229055444371078
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -33,7 +33,12 @@ public class TimeManager : MonoBehaviour
 
     private void Start()
     {
-        CurrentTime = TIME_START;
+        float bonusTime = 0f;
+        if (SaveManager.Instance != null)
+        {
+            bonusTime = SaveManager.Instance.StartingTimeLevel * 4f;
+        }
+        CurrentTime = TIME_START + bonusTime;
     }
 
     private void Update()

@@ -29,12 +29,34 @@ public class AudioManager : MonoBehaviour
 
     private void Start()
     {
+        // Inicializar niveles de volumen guardados
+        if (SaveManager.Instance != null)
+        {
+            SetVolume(SaveManager.Instance.MusicVolume, SaveManager.Instance.SFXVolume);
+        }
+        else
+        {
+            SetVolume(0.8f, 0.8f);
+        }
+
         if (TimeManager.Instance != null)
         {
             TimeManager.Instance.OnTimeCritical += HandleTimeCritical;
         }
         
         PlayMusic(mainMusic);
+    }
+
+    public void SetVolume(float music, float sfx)
+    {
+        if (musicSource != null)
+        {
+            musicSource.volume = music;
+        }
+        if (sfxSource != null)
+        {
+            sfxSource.volume = sfx;
+        }
     }
 
     private void OnDestroy()
