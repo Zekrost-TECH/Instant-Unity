@@ -1,4 +1,5 @@
 using UnityEngine;
+using MoreMountains.Feedbacks;
 
 [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
 public abstract class EnemyBase : MonoBehaviour, IDamageable
@@ -12,6 +13,9 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     public float timeDamageToPlayer = 5f;
     [Tooltip("Si es true, este enemigo cuenta como élite al morir.")]
     public bool isElite = false;
+
+    [Header("Game Feel")]
+    public MMF_Player damageFeedback;
 
     protected int currentHealth;
     protected Rigidbody2D rb;
@@ -72,6 +76,9 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     public virtual void OnHit(int damageAmount)
     {
         currentHealth -= damageAmount;
+        
+        if (damageFeedback != null) damageFeedback.PlayFeedbacks();
+
         if (currentHealth <= 0)
         {
             Die();

@@ -161,9 +161,19 @@ public class UpgradeCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         Vector2 localPoint;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(rectTransform, eventData.position, eventData.pressEventCamera, out localPoint);
 
+        float width = rectTransform.rect.width;
+        float height = rectTransform.rect.height;
+
+        // Evitar división por cero si el layout no ha terminado de calcularse
+        if (width <= 0f || height <= 0f) return;
+
         // Calcular porcentaje (-0.5 a 0.5 desde el centro)
-        float xPercent = localPoint.x / rectTransform.rect.width;
-        float yPercent = localPoint.y / rectTransform.rect.height;
+        float xPercent = localPoint.x / width;
+        float yPercent = localPoint.y / height;
+
+        // Validar que no haya valores indeterminados (NaN o Infinity)
+        if (float.IsNaN(xPercent) || float.IsInfinity(xPercent) || float.IsNaN(yPercent) || float.IsInfinity(yPercent)) 
+            return;
 
         // Invertir ejes para que la carta se incline de forma natural hacia el ratón
         float xAngle = yPercent * maxTiltAngle; 

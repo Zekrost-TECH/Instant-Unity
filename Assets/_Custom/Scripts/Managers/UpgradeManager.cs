@@ -84,8 +84,8 @@ public class UpgradeManager : MonoBehaviour
     {
         if (options == null || options.Count == 0) return;
 
-        if (TimeManager.Instance != null)
-            TimeManager.Instance.SetDrainMultiplier(0.2f);
+        // Pausar el juego completamente
+        Time.timeScale = 0f;
         
         OnUpgradeWindowOpened?.Invoke(options);
     }
@@ -96,8 +96,8 @@ public class UpgradeManager : MonoBehaviour
         upgradesAcquired++;
         UpgradeEffects.ApplyUpgrade(upgrade);
 
-        if (TimeManager.Instance != null)
-            TimeManager.Instance.SetDrainMultiplier(1.0f);
+        // Reanudar el tiempo
+        Time.timeScale = 1f;
     }
 
     private List<UpgradeData> GetDynamicUpgrades(int count)

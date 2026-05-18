@@ -61,10 +61,7 @@ public class TimeManager : MonoBehaviour
     public void AddTime(float amount)
     {
         CurrentTime += amount;
-        if (CurrentTime > TIME_MAX)
-        {
-            CurrentTime = TIME_MAX;
-        }
+        // Se removió el tope máximo para recompensar al jugador
         OnTimeChanged?.Invoke(CurrentTime);
     }
 
