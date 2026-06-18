@@ -8,9 +8,11 @@ public class EnemyManager : MonoBehaviour
 
     public List<EnemyBase> ActiveEnemies { get; private set; } = new List<EnemyBase>();
     public int KillCount { get; private set; } = 0;
+    public int KillsSinceLastUpgrade { get; private set; } = 0;
 
     public event Action<EnemyBase, bool> OnEnemyKilled;
     public event Action<int> OnKillCountChanged;
+    public event Action OnKillsThresholdReached;
 
     private void Awake()
     {
@@ -42,10 +44,29 @@ public class EnemyManager : MonoBehaviour
     public void NotifyEnemyDeath(EnemyBase enemy, bool isElite = false)
     {
         KillCount++;
+        KillsSinceLastUpgrade++;
         OnKillCountChanged?.Invoke(KillCount);
         OnEnemyKilled?.Invoke(enemy, isElite);
+
+        if (KillsSinceLastUpgrade >= 20)
+        {
+            KillsSinceLastUpgrade = 0;
+            OnKillsThresholdReached?.Invoke();
+        }
         
         UnregisterEnemy(enemy);
+    }
+
+    public void ResetKillCount()
+    {
+        KillCount = 0;
+        KillsSinceLastUpgrade = 0;
+        OnKillCountChanged?.Invoke(KillCount);
+    }
+
+    public void ResetKillsSinceLastUpgrade()
+    {
+        KillsSinceLastUpgrade = 0;
     }
 
     public EnemyBase GetNearestEnemy(Vector3 position, float range)

@@ -26,6 +26,8 @@ public class SpawnManager : MonoBehaviour
     private ObjectPool<EnemyBase> elitePool;
     private ObjectPool<EnemyProjectile> projectilePool;
 
+    private const float ELITE_INTERVAL = 45f;
+
     private float gameTime = 0f;
     private float spawnTimer = 0f;
     private float eliteTimer = 0f;
@@ -86,24 +88,39 @@ public class SpawnManager : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameManager.GameState.Playing)
+        if (GameManager.Instance == null) return;
+
+        GameManager.GameState state = GameManager.Instance.CurrentState;
+        if (state != GameManager.GameState.Playing && state != GameManager.GameState.Upgrade)
             return;
 
-        gameTime += Time.deltaTime;
-        spawnTimer -= Time.deltaTime;
-        eliteTimer += Time.deltaTime;
+        float dt = Time.deltaTime;
+        gameTime += dt;
+        spawnTimer -= dt;
+        eliteTimer += dt;
 
-        if (spawnTimer <= 0f)
+        // No spawneamos nuevos enemigos durante la ventana de upgrade
+        if (state == GameManager.GameState.Playing)
         {
-            SpawnEnemy();
-            spawnTimer = GetSpawnRate(gameTime);
-        }
+            if (spawnTimer <= 0f)
+            {
+                SpawnEnemy();
+                spawnTimer = GetSpawnRate(gameTime);
+            }
 
-        if (eliteTimer >= 60f) 
-        {
-            eliteTimer = 0f;
-            SpawnElite();
+            if (eliteTimer >= ELITE_INTERVAL) 
+            {
+                eliteTimer = 0f;
+                SpawnElite();
+            }
         }
+    }
+
+    public void ResetGameTime()
+    {
+        gameTime = 0f;
+        spawnTimer = 0f;
+        eliteTimer = 0f;
     }
 
     private float GetSpawnRate(float t)

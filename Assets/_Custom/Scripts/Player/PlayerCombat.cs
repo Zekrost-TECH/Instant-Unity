@@ -120,6 +120,8 @@ public class PlayerCombat : MonoBehaviour
         // Jugar GameFeel: Screen Shake, impacto visual fuerte
         if (takeDamageFeedback != null) takeDamageFeedback.PlayFeedbacks();
 
+        HapticManager.Instance?.TriggerDamage();
+
         Debug.Log($"¡Ouch! Te golpearon. -{damageToApply}s");
         return true;
     }

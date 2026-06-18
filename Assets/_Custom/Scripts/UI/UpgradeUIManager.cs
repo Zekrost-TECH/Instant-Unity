@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 public class UpgradeUIManager : MonoBehaviour
 {
@@ -7,6 +9,9 @@ public class UpgradeUIManager : MonoBehaviour
     public GameObject upgradeCanvasPanel;
     public Transform cardsContainer;
     public UpgradeCardUI cardPrefab;
+    public Image overlayImage;
+    public Image progressBar;
+    public TextMeshProUGUI titleText;
 
     private List<UpgradeCardUI> activeCards = new List<UpgradeCardUI>();
 
@@ -20,6 +25,8 @@ public class UpgradeUIManager : MonoBehaviour
         if (UpgradeManager.Instance != null)
         {
             UpgradeManager.Instance.OnUpgradeWindowOpened += HandleUpgradeWindowOpened;
+            UpgradeManager.Instance.OnUpgradeWindowClosed += HandleUpgradeWindowClosed;
+            UpgradeManager.Instance.OnUpgradeTimerChanged += HandleUpgradeTimerChanged;
         }
     }
 
@@ -28,6 +35,8 @@ public class UpgradeUIManager : MonoBehaviour
         if (UpgradeManager.Instance != null)
         {
             UpgradeManager.Instance.OnUpgradeWindowOpened -= HandleUpgradeWindowOpened;
+            UpgradeManager.Instance.OnUpgradeWindowClosed -= HandleUpgradeWindowClosed;
+            UpgradeManager.Instance.OnUpgradeTimerChanged -= HandleUpgradeTimerChanged;
         }
     }
 
@@ -36,6 +45,15 @@ public class UpgradeUIManager : MonoBehaviour
         if (upgradeCanvasPanel != null)
         {
             upgradeCanvasPanel.SetActive(true);
+        }
+
+        if (titleText != null)
+            titleText.text = "ELIGE UN UPGRADE";
+
+        if (progressBar != null)
+        {
+            progressBar.fillAmount = 1f;
+            progressBar.color = Color.white;
         }
         
         // Limpiar cartas anteriores si las hubiera
@@ -57,16 +75,28 @@ public class UpgradeUIManager : MonoBehaviour
         }
     }
 
+    private void HandleUpgradeWindowClosed()
+    {
+        if (upgradeCanvasPanel != null)
+        {
+            upgradeCanvasPanel.SetActive(false);
+        }
+    }
+
+    private void HandleUpgradeTimerChanged(float progress)
+    {
+        if (progressBar != null)
+        {
+            progressBar.fillAmount = progress;
+            progressBar.color = progress < 0.375f ? Color.red : Color.white; // < 3s de 8s
+        }
+    }
+
     private void OnCardSelected(UpgradeData selectedUpgrade)
     {
         if (UpgradeManager.Instance != null)
         {
             UpgradeManager.Instance.ApplyUpgrade(selectedUpgrade);
-        }
-        
-        if (upgradeCanvasPanel != null)
-        {
-            upgradeCanvasPanel.SetActive(false);
         }
     }
 }

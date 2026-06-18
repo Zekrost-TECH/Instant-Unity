@@ -16,6 +16,9 @@ public class AudioManager : MonoBehaviour
     public AudioClip enemyDeathSFX;
     public AudioClip playerDashSFX;
     public AudioClip upgradeSelectSFX;
+    public AudioClip upgradeMissedSFX;
+    public AudioClip timeGainSFX;
+    public AudioClip clockBeepSFX;
 
     private void Awake()
     {
@@ -75,12 +78,36 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+    public void PlayClockBeep()
+    {
+        if (clockBeepSFX != null && sfxSource != null)
+        {
+            sfxSource.PlayOneShot(clockBeepSFX, 0.8f);
+        }
+    }
+
+    public void PlayTimeGainSFX()
+    {
+        if (timeGainSFX != null && sfxSource != null)
+        {
+            sfxSource.PlayOneShot(timeGainSFX, 0.8f);
+        }
+    }
+
     public void PlayMusic(AudioClip clip)
     {
         if (musicSource != null && clip != null)
         {
             musicSource.clip = clip;
             musicSource.Play();
+        }
+    }
+
+    public void StopMusic()
+    {
+        if (musicSource != null)
+        {
+            musicSource.Stop();
         }
     }
 

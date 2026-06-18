@@ -18,10 +18,13 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
 
     [Header("Game Feel")]
     public MMF_Player damageFeedback;
+    public Color baseColor = Color.red;
+    public int deathParticleCount = 12;
 
     protected int currentHealth;
     protected Rigidbody2D rb;
     protected Transform playerTransform;
+    protected EnemyVisualFeedback visualFeedback;
 
     private static Transform cachedPlayerTransform;
 
@@ -32,6 +35,10 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = 0f;
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+
+        visualFeedback = GetComponent<EnemyVisualFeedback>();
+        if (visualFeedback == null)
+            visualFeedback = gameObject.AddComponent<EnemyVisualFeedback>();
     }
 
     /// <summary>
@@ -41,6 +48,12 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     protected virtual void OnEnable()
     {
         currentHealth = maxHealth;
+
+        if (visualFeedback != null)
+        {
+            visualFeedback.SetBaseColor(baseColor);
+            visualFeedback.SetEliteGlow(isElite);
+        }
 
         // Cacheamos al jugador usando una referencia estática para evitar FindGameObjectWithTag repetitivos
         if (cachedPlayerTransform == null)
@@ -83,6 +96,7 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
         currentHealth -= damageAmount;
         
         if (damageFeedback != null) damageFeedback.PlayFeedbacks();
+        visualFeedback?.TriggerHitFlash();
 
         if (currentHealth <= 0)
         {
@@ -104,7 +118,11 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     {
         // 1. Suma tiempo al jugador
         if (giveReward && TimeManager.Instance != null)
+        {
             TimeManager.Instance.AddTime(timeRewardOnDeath);
+            AudioManager.Instance?.PlayTimeGainSFX();
+            ParticleManager.Instance?.SpawnTimeGainParticles(transform.position);
+        }
 
         // 2. Notifica al EnemyManager
         if (EnemyManager.Instance != null)
@@ -115,7 +133,13 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
                 EnemyManager.Instance.UnregisterEnemy(this);
         }
 
-        // 3. Devuelve el objeto al pool — NUNCA se llama a Destroy()
+        // 3. Feedback visual y háptico
+        ParticleManager.Instance?.SpawnDeathParticles(transform.position, baseColor, deathParticleCount);
+        AudioManager.Instance?.PlaySFX(AudioManager.Instance?.enemyDeathSFX, isElite ? 1f : 0.8f);
+        if (isElite)
+            HapticManager.Instance?.TriggerEliteKill();
+
+        // 4. Devuelve el objeto al pool — NUNCA se llama a Destroy()
         if (SpawnManager.Instance != null)
             SpawnManager.Instance.ReleaseEnemy(this);
     }

@@ -21,6 +21,9 @@ public class MainMenuUI : MonoBehaviour
     [Header("Settings Panel Elements")]
     public Slider musicSlider;
     public Slider sfxSlider;
+    public Toggle musicToggle;
+    public Toggle sfxToggle;
+    public Toggle vibrationToggle;
     public GameObject creditsSection;
 
     [Header("Upgrades Panel Elements")]
@@ -81,7 +84,32 @@ public class MainMenuUI : MonoBehaviour
             sfxSlider.onValueChanged.AddListener(OnVolumeChanged);
         }
 
+        if (musicToggle != null)
+        {
+            musicToggle.isOn = SaveManager.Instance.MusicVolume > 0f;
+            musicToggle.onValueChanged.AddListener(OnMusicToggleChanged);
+        }
+
+        if (sfxToggle != null)
+        {
+            sfxToggle.isOn = SaveManager.Instance.SFXVolume > 0f;
+            sfxToggle.onValueChanged.AddListener(OnSFXToggleChanged);
+        }
+
+        if (vibrationToggle != null)
+        {
+            vibrationToggle.isOn = SaveManager.Instance.VibrationEnabled;
+            vibrationToggle.onValueChanged.AddListener(OnVibrationChanged);
+        }
+
         UpdateAllUI();
+
+        // Si venimos de Game Over con el botón de tienda, abrir la tienda directamente
+        if (GameOverController.OpenShopOnLoad)
+        {
+            GameOverController.OpenShopOnLoad = false;
+            OpenShop();
+        }
     }
 
     private void UpdateAllUI()
@@ -179,6 +207,33 @@ public class MainMenuUI : MonoBehaviour
         {
             SaveManager.Instance.SetVolume(musicSlider.value, sfxSlider.value);
         }
+    }
+
+    private void OnVibrationChanged(bool enabled)
+    {
+        SaveManager.Instance?.SetVibration(enabled);
+    }
+
+    private void OnMusicToggleChanged(bool enabled)
+    {
+        if (SaveManager.Instance == null) return;
+
+        float musicVol = enabled ? (musicSlider != null ? musicSlider.value : 0.8f) : 0f;
+        SaveManager.Instance.SetVolume(musicVol, SaveManager.Instance.SFXVolume);
+
+        if (musicSlider != null)
+            musicSlider.value = musicVol;
+    }
+
+    private void OnSFXToggleChanged(bool enabled)
+    {
+        if (SaveManager.Instance == null) return;
+
+        float sfxVol = enabled ? (sfxSlider != null ? sfxSlider.value : 0.8f) : 0f;
+        SaveManager.Instance.SetVolume(SaveManager.Instance.MusicVolume, sfxVol);
+
+        if (sfxSlider != null)
+            sfxSlider.value = sfxVol;
     }
 
     // --- SCOREBOARD / RECORDS ---
@@ -357,7 +412,7 @@ public class MainMenuUI : MonoBehaviour
 
     public void ActionSkinClick(string skinName)
     {
-        if (SaveManager.Instance == null) return;
+        if (SaveManager.Instance == null || SkinManager.Instance == null) return;
 
         int cost = 0;
         switch (skinName)
@@ -368,15 +423,15 @@ public class MainMenuUI : MonoBehaviour
             case "Gold": cost = 500; break;
         }
 
-        if (SaveManager.Instance.IsSkinUnlocked(skinName))
+        if (SkinManager.Instance.IsSkinUnlocked(skinName))
         {
-            SaveManager.Instance.EquipSkin(skinName);
+            SkinManager.Instance.EquipSkin(skinName, SkinTarget.Player);
         }
         else
         {
             if (SaveManager.Instance.UnlockSkin(skinName, cost))
             {
-                SaveManager.Instance.EquipSkin(skinName);
+                SkinManager.Instance.EquipSkin(skinName, SkinTarget.Player);
             }
         }
 

@@ -42,6 +42,10 @@ public class PlayerMovement : MonoBehaviour
     private Camera mainCamera;
 
     public bool IsInvulnerable => isDashing || hitInvulnerabilityCounter > 0f;
+    public bool IsDashing => isDashing;
+    public float DashCooldownRemaining => dashCooldownCounter;
+    public float DashCooldownTotal => dashCooldown;
+    public float DashCooldownRatio => dashCooldown > 0f ? Mathf.Clamp01(1f - (dashCooldownCounter / dashCooldown)) : 1f;
 
     private void Awake()
     {
@@ -64,16 +68,25 @@ public class PlayerMovement : MonoBehaviour
 
     private void ApplyEquippedSkin()
     {
-        SpriteRenderer sr = GetComponent<SpriteRenderer>();
-        if (sr != null && SaveManager.Instance != null)
+        SkinRenderer skinRenderer = GetComponent<SkinRenderer>();
+        if (skinRenderer != null && SaveManager.Instance != null)
         {
-            switch (SaveManager.Instance.EquippedSkin)
+            skinRenderer.ApplySkin();
+        }
+        else
+        {
+            // Fallback: cambiar color directamente si no hay SkinRenderer
+            SpriteRenderer sr = GetComponent<SpriteRenderer>();
+            if (sr != null && SaveManager.Instance != null)
             {
-                case "Cyan": sr.color = Color.cyan; break;
-                case "Gold": sr.color = new Color(1f, 0.84f, 0f); break;
-                case "Purple": sr.color = new Color(0.6f, 0.2f, 0.8f); break;
-                case "Red": sr.color = Color.red; break;
-                case "Green": sr.color = Color.green; break;
+                switch (SaveManager.Instance.EquippedSkin)
+                {
+                    case "Cyan": sr.color = Color.cyan; break;
+                    case "Gold": sr.color = new Color(1f, 0.84f, 0f); break;
+                    case "Purple": sr.color = new Color(0.6f, 0.2f, 0.8f); break;
+                    case "Red": sr.color = Color.red; break;
+                    case "Green": sr.color = Color.green; break;
+                }
             }
         }
     }
@@ -171,6 +184,9 @@ public class PlayerMovement : MonoBehaviour
             dashCooldownCounter = dashCooldown;
 
             dashDirection = playerInput.MoveInput != Vector2.zero ? playerInput.MoveInput.normalized : lastMoveDirection;
+
+            AudioManager.Instance?.PlaySFX(AudioManager.Instance?.playerDashSFX, 0.8f);
+            ParticleManager.Instance?.SpawnDashTrail(transform.position, dashDirection);
         }
     }
 

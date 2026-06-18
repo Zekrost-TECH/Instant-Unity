@@ -9,6 +9,8 @@ public class GameManager : MonoBehaviour
     public GameState CurrentState { get; private set; }
 
     public event Action<GameState> OnGameStateChanged;
+    public event Action<float, int, int> OnGameOver; // time, kills, cronos
+    public event Action OnGameRestarted;
 
     private void Awake()
     {
@@ -34,6 +36,7 @@ public class GameManager : MonoBehaviour
     {
         ChangeState(GameState.Playing);
         Time.timeScale = 1f;
+        ResetGameSystems();
     }
 
     public void PauseGame()
@@ -48,6 +51,11 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1f;
     }
 
+    public void ChangeToUpgradeState()
+    {
+        ChangeState(GameState.Upgrade);
+    }
+
     public void TriggerGameOver()
     {
         if (CurrentState == GameState.GameOver) return;
@@ -55,6 +63,7 @@ public class GameManager : MonoBehaviour
         ChangeState(GameState.GameOver);
         Debug.Log("¡Game Over!");
         Time.timeScale = 0f;
+        AudioManager.Instance?.StopMusic();
 
         // Calcular puntuación y guardar datos si es posible
         if (SaveManager.Instance != null && SpawnManager.Instance != null && EnemyManager.Instance != null)
@@ -67,12 +76,31 @@ public class GameManager : MonoBehaviour
             
             SaveManager.Instance.AddCronos(cronosGained);
             SaveManager.Instance.UpdateRecords(finalTime, finalKills);
+            SaveManager.Instance.SetFirstTimePlayed();
 
             Debug.Log($"Resultados de la partida: +{cronosGained} Cronos ganados. Record Time: {SaveManager.Instance.BestTime:F1}s, Record Kills: {SaveManager.Instance.BestKills}");
+
+            OnGameOver?.Invoke(finalTime, finalKills, cronosGained);
         }
     }
 
-    private void ChangeState(GameState newState)
+    public void RestartGame()
+    {
+        Time.timeScale = 1f;
+        ResetGameSystems();
+        ChangeState(GameState.Playing);
+        OnGameRestarted?.Invoke();
+    }
+
+    private void ResetGameSystems()
+    {
+        TimeManager.Instance?.ResetTime();
+        EnemyManager.Instance?.ResetKillCount();
+        SpawnManager.Instance?.ResetGameTime();
+        UpgradeManager.Instance?.ResetUpgrades();
+    }
+
+    public void ChangeState(GameState newState)
     {
         if (CurrentState == newState) return;
         

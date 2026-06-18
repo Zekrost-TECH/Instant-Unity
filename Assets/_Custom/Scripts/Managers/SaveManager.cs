@@ -8,10 +8,12 @@ public class SaveManager : MonoBehaviour
     public float BestTime { get; private set; }
     public int BestKills { get; private set; }
     public int Cronos { get; private set; }
+    public int CurrentRunCronos { get; private set; }
 
     [Header("Settings")]
     public float MusicVolume { get; private set; } = 0.8f;
     public float SFXVolume { get; private set; } = 0.8f;
+    public bool VibrationEnabled { get; private set; } = true;
 
     [Header("Passive Upgrades")]
     public int StartingTimeLevel { get; private set; } = 0; // Max 5 (+2s per level)
@@ -20,6 +22,7 @@ public class SaveManager : MonoBehaviour
 
     [Header("Skins")]
     public string EquippedSkin { get; private set; } = "Cyan";
+    public string EquippedEnemySet { get; private set; } = "Default";
 
     private void Awake()
     {
@@ -40,15 +43,18 @@ public class SaveManager : MonoBehaviour
         BestTime = PlayerPrefs.GetFloat("BestTime", 0f);
         BestKills = PlayerPrefs.GetInt("BestKills", 0);
         Cronos = PlayerPrefs.GetInt("Cronos", 0);
+        CurrentRunCronos = PlayerPrefs.GetInt("CurrentRunCronos", 0);
 
         MusicVolume = PlayerPrefs.GetFloat("MusicVolume", 0.8f);
         SFXVolume = PlayerPrefs.GetFloat("SFXVolume", 0.8f);
+        VibrationEnabled = PlayerPrefs.GetInt("VibrationEnabled", 1) == 1;
 
         StartingTimeLevel = PlayerPrefs.GetInt("StartingTimeLevel", 0);
         AttackRangeLevel = PlayerPrefs.GetInt("AttackRangeLevel", 0);
         DashCooldownLevel = PlayerPrefs.GetInt("DashCooldownLevel", 0);
 
         EquippedSkin = PlayerPrefs.GetString("EquippedSkin", "Cyan");
+        EquippedEnemySet = PlayerPrefs.GetString("EquippedEnemySet", "Default");
     }
 
     public void SaveData()
@@ -56,15 +62,18 @@ public class SaveManager : MonoBehaviour
         PlayerPrefs.SetFloat("BestTime", BestTime);
         PlayerPrefs.SetInt("BestKills", BestKills);
         PlayerPrefs.SetInt("Cronos", Cronos);
+        PlayerPrefs.SetInt("CurrentRunCronos", CurrentRunCronos);
 
         PlayerPrefs.SetFloat("MusicVolume", MusicVolume);
         PlayerPrefs.SetFloat("SFXVolume", SFXVolume);
+        PlayerPrefs.SetInt("VibrationEnabled", VibrationEnabled ? 1 : 0);
 
         PlayerPrefs.SetInt("StartingTimeLevel", StartingTimeLevel);
         PlayerPrefs.SetInt("AttackRangeLevel", AttackRangeLevel);
         PlayerPrefs.SetInt("DashCooldownLevel", DashCooldownLevel);
 
         PlayerPrefs.SetString("EquippedSkin", EquippedSkin);
+        PlayerPrefs.SetString("EquippedEnemySet", EquippedEnemySet);
 
         PlayerPrefs.Save();
     }
@@ -92,11 +101,48 @@ public class SaveManager : MonoBehaviour
         SFXVolume = sfx;
         SaveData();
 
-        // Aplicar volumen en el AudioManager
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.SetVolume(music, sfx);
         }
+    }
+
+    public void SetVibration(bool enabled)
+    {
+        VibrationEnabled = enabled;
+        SaveData();
+    }
+
+    public bool IsFirstTime()
+    {
+        return PlayerPrefs.GetInt("FirstTimePlayed", 1) == 1;
+    }
+
+    public void SetFirstTimePlayed()
+    {
+        PlayerPrefs.SetInt("FirstTimePlayed", 0);
+        PlayerPrefs.Save();
+    }
+
+    public void SetCurrentRunCronos(int amount)
+    {
+        CurrentRunCronos = amount;
+        PlayerPrefs.SetInt("CurrentRunCronos", amount);
+        PlayerPrefs.Save();
+    }
+
+    public void AddCurrentRunCronos(int amount)
+    {
+        CurrentRunCronos += amount;
+        PlayerPrefs.SetInt("CurrentRunCronos", CurrentRunCronos);
+        PlayerPrefs.Save();
+    }
+
+    public void ResetCurrentRunCronos()
+    {
+        CurrentRunCronos = 0;
+        PlayerPrefs.SetInt("CurrentRunCronos", 0);
+        PlayerPrefs.Save();
     }
 
     public bool UpdateRecords(float newTime, int newKills)
@@ -184,5 +230,11 @@ public class SaveManager : MonoBehaviour
             EquippedSkin = skinName;
             SaveData();
         }
+    }
+
+    public void EquipEnemySet(string setName)
+    {
+        EquippedEnemySet = setName;
+        SaveData();
     }
 }

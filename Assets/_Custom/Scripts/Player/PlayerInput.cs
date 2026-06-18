@@ -5,14 +5,19 @@ using UnityEngine.InputSystem;
 public class PlayerInput : MonoBehaviour
 {
     private InputSystem_Actions inputActions;
+    private JoystickController joystick;
     
     public Vector2 MoveInput { get; private set; }
     public event Action OnDashPressed;
 
     private void Awake()
     {
-        // Asumimos que se generó la clase C# llamada InputSystem_Actions desde el editor
         inputActions = new InputSystem_Actions();
+    }
+
+    private void Start()
+    {
+        joystick = FindFirstObjectByType<JoystickController>();
     }
 
     private void OnEnable()
@@ -35,7 +40,11 @@ public class PlayerInput : MonoBehaviour
             return;
         }
 
-        MoveInput = inputActions.Player.Move.ReadValue<Vector2>();
+        Vector2 systemInput = inputActions.Player.Move.ReadValue<Vector2>();
+        Vector2 joystickInput = joystick != null ? joystick.InputDirection : Vector2.zero;
+
+        // Priorizar joystick si está activo
+        MoveInput = joystickInput.sqrMagnitude > 0.01f ? joystickInput : systemInput;
     }
 
     private void HandleDash(InputAction.CallbackContext context)
@@ -43,6 +52,14 @@ public class PlayerInput : MonoBehaviour
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
             return;
             
+        OnDashPressed?.Invoke();
+    }
+
+    public void TriggerDash()
+    {
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
+            return;
+
         OnDashPressed?.Invoke();
     }
 }

@@ -18,7 +18,20 @@ public class TimeManager : MonoBehaviour
 
     public event Action<float> OnTimeChanged;
     public event Action OnTimeCritical;
+    public event Action OnTimeCriticalEnded;
     public event Action OnTimeOut;
+    public event Action<TimeColorState> OnTimeColorChanged;
+
+    private float nextBeepTime = 0f;
+    private float beepInterval = 0.5f;
+    private AudioSource clockAudioSource;
+
+    public enum TimeColorState
+    {
+        Calm,    // > 15s
+        Warning, // 5-15s
+        Danger   // <= 5s
+    }
 
     private void Awake()
     {
@@ -29,6 +42,10 @@ public class TimeManager : MonoBehaviour
         }
         
         Instance = this;
+
+        // AudioSource dedicado para el beep crítico
+        clockAudioSource = gameObject.AddComponent<AudioSource>();
+        clockAudioSource.playOnAwake = false;
     }
 
     private void Start()
@@ -38,7 +55,8 @@ public class TimeManager : MonoBehaviour
         {
             bonusTime = SaveManager.Instance.StartingTimeLevel * 4f;
         }
-        CurrentTime = TIME_START + bonusTime;
+        CurrentTime = Mathf.Min(TIME_START + bonusTime, TIME_MAX);
+        UpdateTimeColorState();
     }
 
     private void Update()
@@ -47,8 +65,10 @@ public class TimeManager : MonoBehaviour
             return;
 
         CurrentTime -= TIME_DRAIN * drainMultiplier * PermanentDrainModifier * Time.deltaTime;
+        CurrentTime = Mathf.Clamp(CurrentTime, 0f, TIME_MAX);
         
         OnTimeChanged?.Invoke(CurrentTime);
+        UpdateTimeColorState();
 
         if (CurrentTime <= 5f && !criticalStateNotified)
         {
@@ -58,28 +78,77 @@ public class TimeManager : MonoBehaviour
         else if (CurrentTime > 5f && criticalStateNotified)
         {
             criticalStateNotified = false;
+            OnTimeCriticalEnded?.Invoke();
+        }
+
+        if (CurrentTime <= 5f)
+        {
+            PlayCriticalBeep();
         }
 
         CheckGameOverCondition();
     }
 
+    private TimeColorState currentColorState = TimeColorState.Calm;
+
+    private void UpdateTimeColorState()
+    {
+        TimeColorState newState;
+        if (CurrentTime <= 5f) newState = TimeColorState.Danger;
+        else if (CurrentTime <= 15f) newState = TimeColorState.Warning;
+        else newState = TimeColorState.Calm;
+
+        if (newState != currentColorState)
+        {
+            currentColorState = newState;
+            OnTimeColorChanged?.Invoke(currentColorState);
+        }
+    }
+
+    private void PlayCriticalBeep()
+    {
+        if (Time.time >= nextBeepTime)
+        {
+            AudioManager.Instance?.PlayClockBeep();
+            nextBeepTime = Time.time + beepInterval;
+        }
+    }
+
     public void AddTime(float amount)
     {
         CurrentTime += amount;
-        // Se removió el tope máximo para recompensar al jugador
+        CurrentTime = Mathf.Clamp(CurrentTime, 0f, TIME_MAX);
         OnTimeChanged?.Invoke(CurrentTime);
+        UpdateTimeColorState();
     }
 
     public void SubtractTime(float amount)
     {
         CurrentTime -= amount;
+        CurrentTime = Mathf.Clamp(CurrentTime, 0f, TIME_MAX);
         OnTimeChanged?.Invoke(CurrentTime);
+        UpdateTimeColorState();
         CheckGameOverCondition();
     }
 
     public void SetDrainMultiplier(float multiplier)
     {
         drainMultiplier = multiplier;
+    }
+
+    public void ResetTime()
+    {
+        float bonusTime = 0f;
+        if (SaveManager.Instance != null)
+        {
+            bonusTime = SaveManager.Instance.StartingTimeLevel * 4f;
+        }
+        CurrentTime = Mathf.Min(TIME_START + bonusTime, TIME_MAX);
+        criticalStateNotified = false;
+        currentColorState = TimeColorState.Calm;
+        nextBeepTime = 0f;
+        OnTimeChanged?.Invoke(CurrentTime);
+        OnTimeColorChanged?.Invoke(currentColorState);
     }
 
     private void CheckGameOverCondition()
