@@ -10,7 +10,7 @@ public class UpgradeUIManager : MonoBehaviour
     public Transform cardsContainer;
     public UpgradeCardUI cardPrefab;
     public Image overlayImage;
-    public Image progressBar;
+    public GameObject progressBarContainer;
     public TextMeshProUGUI titleText;
 
     private List<UpgradeCardUI> activeCards = new List<UpgradeCardUI>();
@@ -21,12 +21,16 @@ public class UpgradeUIManager : MonoBehaviour
         {
             upgradeCanvasPanel.SetActive(false);
         }
-        
+
+        if (progressBarContainer != null)
+        {
+            progressBarContainer.SetActive(false);
+        }
+
         if (UpgradeManager.Instance != null)
         {
             UpgradeManager.Instance.OnUpgradeWindowOpened += HandleUpgradeWindowOpened;
             UpgradeManager.Instance.OnUpgradeWindowClosed += HandleUpgradeWindowClosed;
-            UpgradeManager.Instance.OnUpgradeTimerChanged += HandleUpgradeTimerChanged;
         }
     }
 
@@ -36,7 +40,6 @@ public class UpgradeUIManager : MonoBehaviour
         {
             UpgradeManager.Instance.OnUpgradeWindowOpened -= HandleUpgradeWindowOpened;
             UpgradeManager.Instance.OnUpgradeWindowClosed -= HandleUpgradeWindowClosed;
-            UpgradeManager.Instance.OnUpgradeTimerChanged -= HandleUpgradeTimerChanged;
         }
     }
 
@@ -50,12 +53,11 @@ public class UpgradeUIManager : MonoBehaviour
         if (titleText != null)
             titleText.text = "ELIGE UN UPGRADE";
 
-        if (progressBar != null)
+        if (progressBarContainer != null)
         {
-            progressBar.fillAmount = 1f;
-            progressBar.color = Color.white;
+            progressBarContainer.SetActive(false);
         }
-        
+
         // Limpiar cartas anteriores si las hubiera
         foreach (var card in activeCards)
         {
@@ -70,7 +72,7 @@ public class UpgradeUIManager : MonoBehaviour
             UpgradeCardUI newCard = Instantiate(cardPrefab, cardsContainer);
             newCard.Setup(option, OnCardSelected, delay);
             activeCards.Add(newCard);
-            
+
             delay += 0.25f; // Retraso escalonado entre cada carta
         }
     }
@@ -80,15 +82,6 @@ public class UpgradeUIManager : MonoBehaviour
         if (upgradeCanvasPanel != null)
         {
             upgradeCanvasPanel.SetActive(false);
-        }
-    }
-
-    private void HandleUpgradeTimerChanged(float progress)
-    {
-        if (progressBar != null)
-        {
-            progressBar.fillAmount = progress;
-            progressBar.color = progress < 0.375f ? Color.red : Color.white; // < 3s de 8s
         }
     }
 

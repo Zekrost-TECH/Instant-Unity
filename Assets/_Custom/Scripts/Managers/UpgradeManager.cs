@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,7 +6,6 @@ public class UpgradeManager : MonoBehaviour
 {
     public static UpgradeManager Instance { get; private set; }
 
-    public const float UPGRADE_WINDOW_DURATION = 8f;
     public const float UPGRADE_DRAIN_MULTIPLIER = 0.2f;
 
     [Header("Pools")]
@@ -17,11 +15,9 @@ public class UpgradeManager : MonoBehaviour
     private List<string> acquiredUpgrades = new List<string>();
     private int totalKills = 0;
     private bool isWindowOpen = false;
-    private Coroutine timeoutCoroutine;
 
     public event Action<List<UpgradeData>> OnUpgradeWindowOpened;
     public event Action OnUpgradeWindowClosed;
-    public event Action<float> OnUpgradeTimerChanged; // 0..1 progreso
 
     private void Awake()
     {
@@ -92,25 +88,6 @@ public class UpgradeManager : MonoBehaviour
         AudioManager.Instance?.FadeMusicTo(0.3f, 0.3f);
 
         OnUpgradeWindowOpened?.Invoke(options);
-
-        if (timeoutCoroutine != null)
-            StopCoroutine(timeoutCoroutine);
-        timeoutCoroutine = StartCoroutine(UpgradeTimeoutCoroutine());
-    }
-
-    private IEnumerator UpgradeTimeoutCoroutine()
-    {
-        float elapsed = 0f;
-        while (elapsed < UPGRADE_WINDOW_DURATION)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            OnUpgradeTimerChanged?.Invoke(1f - (elapsed / UPGRADE_WINDOW_DURATION));
-            yield return null;
-        }
-
-        // Tiempo agotado sin elegir
-        CloseUpgradeWindow();
-        AudioManager.Instance?.PlaySFX(AudioManager.Instance?.upgradeMissedSFX, 0.8f);
     }
 
     public void ApplyUpgrade(UpgradeData upgrade)
@@ -137,12 +114,6 @@ public class UpgradeManager : MonoBehaviour
         if (!isWindowOpen) return;
 
         isWindowOpen = false;
-
-        if (timeoutCoroutine != null)
-        {
-            StopCoroutine(timeoutCoroutine);
-            timeoutCoroutine = null;
-        }
 
         TimeManager.Instance?.SetDrainMultiplier(1f);
         AudioManager.Instance?.FadeMusicTo(1f, 0.3f);
