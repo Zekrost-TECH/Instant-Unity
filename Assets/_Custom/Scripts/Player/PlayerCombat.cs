@@ -31,6 +31,10 @@ public class PlayerCombat : MonoBehaviour
     private float attackTimer = 0f;
     private float lastRange;
 
+    private int baseAttackDamage;
+    private float baseAttackRate;
+    private float baseAttackRange;
+
     private void Awake()
     {
         movement = GetComponent<PlayerMovement>();
@@ -43,6 +47,11 @@ public class PlayerCombat : MonoBehaviour
             attackRange *= (1f + SaveManager.Instance.AttackRangeLevel * 0.05f);
         }
         lastRange = attackRange;
+
+        baseAttackDamage = attackDamage;
+        baseAttackRate = attackRate;
+        baseAttackRange = attackRange;
+
         UpdateRangeVisual();
     }
 
@@ -124,6 +133,16 @@ public class PlayerCombat : MonoBehaviour
 
         Debug.Log($"¡Ouch! Te golpearon. -{damageToApply}s");
         return true;
+    }
+
+    public void ResetState()
+    {
+        attackDamage = baseAttackDamage;
+        attackRate = baseAttackRate;
+        attackRange = baseAttackRange;
+        lastRange = attackRange;
+        attackTimer = 0f;
+        UpdateRangeVisual();
     }
 
     private void OnDrawGizmos()

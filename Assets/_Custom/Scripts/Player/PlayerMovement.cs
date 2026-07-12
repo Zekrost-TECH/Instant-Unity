@@ -41,6 +41,9 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 dashDirection;
     private Camera mainCamera;
 
+    private float baseMoveSpeed;
+    private float baseDashCooldown;
+
     public bool IsInvulnerable => isDashing || hitInvulnerabilityCounter > 0f;
     public bool IsDashing => isDashing;
     public float DashCooldownRemaining => dashCooldownCounter;
@@ -64,6 +67,9 @@ public class PlayerMovement : MonoBehaviour
             dashCooldown *= (1f - SaveManager.Instance.DashCooldownLevel * 0.08f);
             ApplyEquippedSkin();
         }
+
+        baseMoveSpeed = moveSpeed;
+        baseDashCooldown = dashCooldown;
     }
 
     private void ApplyEquippedSkin()
@@ -215,6 +221,27 @@ public class PlayerMovement : MonoBehaviour
     public void TriggerHitInvulnerability()
     {
         hitInvulnerabilityCounter = hitInvulnerabilityDuration;
+    }
+
+    public void ResetState()
+    {
+        moveSpeed = baseMoveSpeed;
+        dashCooldown = baseDashCooldown;
+
+        transform.position = Vector3.zero;
+        lastMoveDirection = Vector2.up;
+        transform.up = lastMoveDirection;
+
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+        }
+
+        isDashing = false;
+        dashTimeCounter = 0f;
+        dashCooldownCounter = 0f;
+        hitInvulnerabilityCounter = 0f;
     }
 
     private void OnDrawGizmos()

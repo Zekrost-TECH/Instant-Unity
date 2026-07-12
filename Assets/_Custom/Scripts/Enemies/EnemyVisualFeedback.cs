@@ -69,7 +69,7 @@ public class EnemyVisualFeedback : MonoBehaviour
     private IEnumerator HitFlashCoroutine()
     {
         sr.color = Color.white;
-        yield return new WaitForSeconds(hitFlashDuration);
+        yield return new WaitForSecondsRealtime(hitFlashDuration);
         sr.color = baseColor;
     }
 

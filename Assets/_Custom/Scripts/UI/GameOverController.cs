@@ -5,11 +5,10 @@ using TMPro;
 
 public class GameOverController : MonoBehaviour
 {
-    public static bool OpenShopOnLoad = false;
     [Header("Game Over Panel")]
     public GameObject gameOverPanel;
 
-    [Header("Stats Texts")]
+    [Header("Stats Texts (Optional)")]
     public TextMeshProUGUI timeText;
     public TextMeshProUGUI killsText;
     public TextMeshProUGUI cronosText;
@@ -18,14 +17,9 @@ public class GameOverController : MonoBehaviour
     public TextMeshProUGUI newRecordText;
 
     [Header("Buttons")]
-    public Button watchAdButton;
     public Button restartButton;
-    public Button shopButton;
-
-    private float lastRunTime;
-    private int lastRunKills;
-    private int lastRunCronos;
-    private bool rewardedAdShown = false;
+    public Button reviveButton;
+    public Button exitToMenuButton;
 
     private void Start()
     {
@@ -37,14 +31,14 @@ public class GameOverController : MonoBehaviour
             GameManager.Instance.OnGameOver += HandleGameOver;
         }
 
-        if (watchAdButton != null)
-            watchAdButton.onClick.AddListener(OnWatchAdClicked);
-
         if (restartButton != null)
             restartButton.onClick.AddListener(OnRestartClicked);
 
-        if (shopButton != null)
-            shopButton.onClick.AddListener(OnShopClicked);
+        if (reviveButton != null)
+            reviveButton.onClick.AddListener(OnReviveClicked);
+
+        if (exitToMenuButton != null)
+            exitToMenuButton.onClick.AddListener(OnExitToMenuClicked);
     }
 
     private void OnDestroy()
@@ -54,23 +48,18 @@ public class GameOverController : MonoBehaviour
             GameManager.Instance.OnGameOver -= HandleGameOver;
         }
 
-        if (watchAdButton != null)
-            watchAdButton.onClick.RemoveListener(OnWatchAdClicked);
-
         if (restartButton != null)
             restartButton.onClick.RemoveListener(OnRestartClicked);
 
-        if (shopButton != null)
-            shopButton.onClick.RemoveListener(OnShopClicked);
+        if (reviveButton != null)
+            reviveButton.onClick.RemoveListener(OnReviveClicked);
+
+        if (exitToMenuButton != null)
+            exitToMenuButton.onClick.RemoveListener(OnExitToMenuClicked);
     }
 
     private void HandleGameOver(float time, int kills, int cronos)
     {
-        lastRunTime = time;
-        lastRunKills = kills;
-        lastRunCronos = cronos;
-        rewardedAdShown = false;
-
         if (gameOverPanel != null)
             gameOverPanel.SetActive(true);
 
@@ -97,25 +86,6 @@ public class GameOverController : MonoBehaviour
 
         if (newRecordText != null)
             newRecordText.gameObject.SetActive(newRecord);
-
-        UpdateWatchAdButton();
-    }
-
-    private void UpdateWatchAdButton()
-    {
-        if (watchAdButton == null) return;
-        watchAdButton.interactable = !rewardedAdShown && (AdsManager.Instance?.IsAdReady ?? false);
-    }
-
-    private void OnWatchAdClicked()
-    {
-        if (rewardedAdShown) return;
-
-        AdsManager.Instance?.ShowRewardedAd(() =>
-        {
-            rewardedAdShown = true;
-            UpdateWatchAdButton();
-        });
     }
 
     private void OnRestartClicked()
@@ -126,9 +96,19 @@ public class GameOverController : MonoBehaviour
         GameManager.Instance?.RestartGame();
     }
 
-    private void OnShopClicked()
+    private void OnReviveClicked()
     {
-        OpenShopOnLoad = true;
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(false);
+
+        AdsManager.Instance?.ShowRewardedAd(() =>
+        {
+            GameManager.Instance?.Revive();
+        });
+    }
+
+    private void OnExitToMenuClicked()
+    {
         SceneManager.LoadScene("0_MainMenu");
     }
 }

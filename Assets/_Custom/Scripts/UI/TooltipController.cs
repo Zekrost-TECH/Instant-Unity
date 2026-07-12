@@ -18,7 +18,6 @@ public class TooltipController : MonoBehaviour
     public string tooltip2Text = "MÁTALOS PARA GANAR TIEMPO";
     public string tooltip3Text = "DASH — INVULNERABLE";
     public float tooltipDuration = 2f;
-    public float pauseTimeScale = 0.05f;
 
     private int currentTooltip = 0;
     private bool isShowing = false;
@@ -116,18 +115,12 @@ public class TooltipController : MonoBehaviour
 
     private IEnumerator WaitTooltipDuration()
     {
-        // Pausar ligeramente durante el tooltip
-        float originalTimeScale = Time.timeScale;
-        Time.timeScale = pauseTimeScale;
-
         float elapsed = 0f;
         while (elapsed < tooltipDuration)
         {
             elapsed += Time.unscaledDeltaTime;
             yield return null;
         }
-
-        Time.timeScale = originalTimeScale;
     }
 
     private void ShowTooltip(string text, RectTransform target)

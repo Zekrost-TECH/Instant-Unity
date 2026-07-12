@@ -118,7 +118,7 @@ public class ParticleManager : MonoBehaviour
 
         while (elapsed < delay)
         {
-            elapsed += Time.deltaTime;
+            elapsed += Time.unscaledDeltaTime;
             if (sr != null)
             {
                 float alpha = Mathf.Lerp(baseColor.a, 0f, elapsed / delay);

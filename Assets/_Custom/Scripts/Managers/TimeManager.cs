@@ -5,7 +5,7 @@ public class TimeManager : MonoBehaviour
 {
     public static TimeManager Instance { get; private set; }
 
-    public const float TIME_START = 30f;
+    public float TIME_START = 30f;
     public const float TIME_MAX = 45f;
     public const float TIME_DRAIN = 1f;
     public const float TIME_PENALTY = 5f;
@@ -147,6 +147,7 @@ public class TimeManager : MonoBehaviour
         criticalStateNotified = false;
         currentColorState = TimeColorState.Calm;
         nextBeepTime = 0f;
+        PermanentDrainModifier = 1.0f;
         OnTimeChanged?.Invoke(CurrentTime);
         OnTimeColorChanged?.Invoke(currentColorState);
     }

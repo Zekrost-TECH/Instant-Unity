@@ -103,13 +103,6 @@ public class MainMenuUI : MonoBehaviour
         }
 
         UpdateAllUI();
-
-        // Si venimos de Game Over con el botón de tienda, abrir la tienda directamente
-        if (GameOverController.OpenShopOnLoad)
-        {
-            GameOverController.OpenShopOnLoad = false;
-            OpenShop();
-        }
     }
 
     private void UpdateAllUI()

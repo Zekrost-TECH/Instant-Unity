@@ -35,20 +35,17 @@ public class GameManager : MonoBehaviour
     public void StartGame()
     {
         ChangeState(GameState.Playing);
-        Time.timeScale = 1f;
         ResetGameSystems();
     }
 
     public void PauseGame()
     {
         ChangeState(GameState.Paused);
-        Time.timeScale = 0f;
     }
 
     public void ResumeGame()
     {
         ChangeState(GameState.Playing);
-        Time.timeScale = 1f;
     }
 
     public void ChangeToUpgradeState()
@@ -59,11 +56,10 @@ public class GameManager : MonoBehaviour
     public void TriggerGameOver()
     {
         if (CurrentState == GameState.GameOver) return;
-        
+
         ChangeState(GameState.GameOver);
         Debug.Log("¡Game Over!");
-        Time.timeScale = 0f;
-        AudioManager.Instance?.StopMusic();
+        AudioManager.Instance?.FadeMusicTo(0.3f, 0.3f);
 
         // Calcular puntuación y guardar datos si es posible
         if (SaveManager.Instance != null && SpawnManager.Instance != null && EnemyManager.Instance != null)
@@ -73,7 +69,7 @@ public class GameManager : MonoBehaviour
 
             // Fórmulas de Cronos ganados: 1 por cada baja, más la mitad del tiempo sobrevivido
             int cronosGained = finalKills + Mathf.FloorToInt(finalTime * 0.5f);
-            
+
             SaveManager.Instance.AddCronos(cronosGained);
             SaveManager.Instance.UpdateRecords(finalTime, finalKills);
             SaveManager.Instance.SetFirstTimePlayed();
@@ -86,14 +82,34 @@ public class GameManager : MonoBehaviour
 
     public void RestartGame()
     {
-        Time.timeScale = 1f;
         ResetGameSystems();
         ChangeState(GameState.Playing);
+        AudioManager.Instance?.FadeMusicTo(1f, 0.3f);
         OnGameRestarted?.Invoke();
+    }
+
+    public void Revive()
+    {
+        TimeManager.Instance?.AddTime(60f);
+        AudioManager.Instance?.FadeMusicTo(1f, 0.3f);
+        ChangeState(GameState.Playing);
     }
 
     private void ResetGameSystems()
     {
+        // Limpiar enemigos y proyectiles antes de resetear el resto
+        SpawnManager.Instance?.ClearAllEnemies();
+
+        // Resetear el jugador (posición, velocidad, stats base, estado de dash)
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+        {
+            PlayerMovement movement = playerObj.GetComponent<PlayerMovement>();
+            PlayerCombat combat = playerObj.GetComponent<PlayerCombat>();
+            if (movement != null) movement.ResetState();
+            if (combat != null) combat.ResetState();
+        }
+
         TimeManager.Instance?.ResetTime();
         EnemyManager.Instance?.ResetKillCount();
         SpawnManager.Instance?.ResetGameTime();

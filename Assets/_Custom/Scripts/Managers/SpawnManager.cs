@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -121,6 +122,34 @@ public class SpawnManager : MonoBehaviour
         gameTime = 0f;
         spawnTimer = 0f;
         eliteTimer = 0f;
+    }
+
+    public void ClearAllEnemies()
+    {
+        if (EnemyManager.Instance != null)
+        {
+            // Copia para iterar de forma segura mientras los OnDisable modifican la lista original
+            List<EnemyBase> snapshot = new List<EnemyBase>(EnemyManager.Instance.ActiveEnemies);
+            foreach (var enemy in snapshot)
+            {
+                if (enemy != null && enemy.gameObject.activeInHierarchy)
+                {
+                    ReleaseEnemy(enemy);
+                }
+            }
+        }
+
+        if (projectilePool != null)
+        {
+            EnemyProjectile[] projectiles = FindObjectsByType<EnemyProjectile>();
+            foreach (var projectile in projectiles)
+            {
+                if (projectile != null && projectile.gameObject.activeInHierarchy)
+                {
+                    ReleaseProjectile(projectile);
+                }
+            }
+        }
     }
 
     private float GetSpawnRate(float t)

@@ -17,7 +17,7 @@ public class PlayerInput : MonoBehaviour
 
     private void Start()
     {
-        joystick = FindFirstObjectByType<JoystickController>();
+        joystick = FindAnyObjectByType<JoystickController>();
     }
 
     private void OnEnable()

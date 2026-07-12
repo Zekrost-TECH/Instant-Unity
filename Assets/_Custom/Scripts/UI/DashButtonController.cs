@@ -27,7 +27,7 @@ public class DashButtonController : MonoBehaviour
             playerInput = player.GetComponent<PlayerInput>();
         }
 
-        tooltipController = FindFirstObjectByType<TooltipController>();
+        tooltipController = FindAnyObjectByType<TooltipController>();
 
         if (cooldownRing != null)
             cooldownRing.fillAmount = 1f;
