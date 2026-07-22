@@ -16,6 +16,7 @@ public class BootstrapInitializer : MonoBehaviour
     public GameObject adsManagerPrefab;
     public GameObject hapticManagerPrefab;
     public GameObject particleManagerPrefab;
+    public GameObject hitVfxManagerPrefab;
 
     [Header("Scenes")]
     public string mainMenuSceneName = "0_MainMenu";
@@ -36,6 +37,7 @@ public class BootstrapInitializer : MonoBehaviour
         EnsureManager(ref adsManagerPrefab, "AdsManager");
         EnsureManager(ref hapticManagerPrefab, "HapticManager");
         EnsureManager(ref particleManagerPrefab, "ParticleManager");
+        EnsureManager(ref hitVfxManagerPrefab, "HitVFXManager");
     }
 
     private void Start()
@@ -81,6 +83,7 @@ public class BootstrapInitializer : MonoBehaviour
             case "AdsManager": obj.AddComponent<AdsManager>(); break;
             case "HapticManager": obj.AddComponent<HapticManager>(); break;
             case "ParticleManager": obj.AddComponent<ParticleManager>(); break;
+            case "HitVFXManager": obj.AddComponent<HitVFXManager>(); break;
         }
     }
 }

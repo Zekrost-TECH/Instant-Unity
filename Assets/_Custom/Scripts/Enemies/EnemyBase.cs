@@ -94,9 +94,19 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     public virtual void OnHit(int damageAmount)
     {
         currentHealth -= damageAmount;
-        
+
         if (damageFeedback != null) damageFeedback.PlayFeedbacks();
         visualFeedback?.TriggerHitFlash();
+
+        if (playerTransform != null)
+        {
+            Collider2D hitCollider = GetComponent<Collider2D>();
+            if (hitCollider != null)
+            {
+                Vector3 hitPoint = hitCollider.ClosestPoint(playerTransform.position);
+                HitVFXManager.Instance?.SpawnBeam(playerTransform, hitPoint);
+            }
+        }
 
         if (currentHealth <= 0)
         {
