@@ -58,7 +58,7 @@ public class GameOverController : MonoBehaviour
             exitToMenuButton.onClick.RemoveListener(OnExitToMenuClicked);
     }
 
-    private void HandleGameOver(float time, int kills, int cronos)
+    private void HandleGameOver(float time, int kills, int cronos, bool newRecord)
     {
         if (gameOverPanel != null)
             gameOverPanel.SetActive(true);
@@ -70,19 +70,13 @@ public class GameOverController : MonoBehaviour
             killsText.text = kills.ToString();
 
         if (cronosText != null)
-            cronosText.text = $"+{cronos} ⟳";
+            cronosText.text = $"+{cronos} \u27F3";
 
         if (bestTimeText != null && SaveManager.Instance != null)
-            bestTimeText.text = $"Récord: {SaveManager.Instance.BestTime:F1}s";
+            bestTimeText.text = $"Record: {SaveManager.Instance.BestTime:F1}s";
 
         if (bestKillsText != null && SaveManager.Instance != null)
-            bestKillsText.text = $"Récord: {SaveManager.Instance.BestKills}";
-
-        bool newRecord = false;
-        if (SaveManager.Instance != null)
-        {
-            newRecord = time > SaveManager.Instance.BestTime || kills > SaveManager.Instance.BestKills;
-        }
+            bestKillsText.text = $"Record: {SaveManager.Instance.BestKills}";
 
         if (newRecordText != null)
             newRecordText.gameObject.SetActive(newRecord);

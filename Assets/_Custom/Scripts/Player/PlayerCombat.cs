@@ -131,7 +131,7 @@ public class PlayerCombat : MonoBehaviour
 
         HapticManager.Instance?.TriggerDamage();
 
-        Debug.Log($"¡Ouch! Te golpearon. -{damageToApply}s");
+        //Debug.Log($"¡Ouch! Te golpearon. -{damageToApply}s");
         return true;
     }
 

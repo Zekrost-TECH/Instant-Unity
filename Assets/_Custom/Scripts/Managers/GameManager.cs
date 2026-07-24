@@ -9,7 +9,7 @@ public class GameManager : MonoBehaviour
     public GameState CurrentState { get; private set; }
 
     public event Action<GameState> OnGameStateChanged;
-    public event Action<float, int, int> OnGameOver; // time, kills, cronos
+    public event Action<float, int, int, bool> OnGameOver; // time, kills, cronos, newRecord
     public event Action OnGameRestarted;
 
     private void Awake()
@@ -30,6 +30,15 @@ public class GameManager : MonoBehaviour
         // For Phase 1 testing, we start the game automatically.
         // In the future, this will be called by a UI Button.
         StartGame();
+    }
+
+    public static int CalculateRunCronos(int kills, float time)
+    {
+        // Balanceo: kills son la fuente principal (40%), tiempo es bonus secundario (8%)
+        // Esto evita que una sola partida larga llene la wallet de cronos
+        int fromKills = Mathf.FloorToInt(kills * 0.4f);
+        int fromTime = Mathf.FloorToInt(time * 0.08f);
+        return Mathf.Max(1, fromKills + fromTime);
     }
 
     public void StartGame()
@@ -67,16 +76,15 @@ public class GameManager : MonoBehaviour
             float finalTime = SpawnManager.Instance.GameTime;
             int finalKills = EnemyManager.Instance.KillCount;
 
-            // Fórmulas de Cronos ganados: 1 por cada baja, más la mitad del tiempo sobrevivido
-            int cronosGained = finalKills + Mathf.FloorToInt(finalTime * 0.5f);
+            int cronosGained = CalculateRunCronos(finalKills, finalTime);
 
             SaveManager.Instance.AddCronos(cronosGained);
-            SaveManager.Instance.UpdateRecords(finalTime, finalKills);
+            bool newRecord = SaveManager.Instance.UpdateRecords(finalTime, finalKills);
             SaveManager.Instance.SetFirstTimePlayed();
 
             Debug.Log($"Resultados de la partida: +{cronosGained} Cronos ganados. Record Time: {SaveManager.Instance.BestTime:F1}s, Record Kills: {SaveManager.Instance.BestKills}");
 
-            OnGameOver?.Invoke(finalTime, finalKills, cronosGained);
+            OnGameOver?.Invoke(finalTime, finalKills, cronosGained, newRecord);
         }
     }
 

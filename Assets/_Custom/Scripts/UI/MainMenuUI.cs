@@ -6,6 +6,7 @@ public class MainMenuUI : MonoBehaviour
 {
     [Header("Top Display")]
     public TextMeshProUGUI bestTimeText;
+    public TextMeshProUGUI bestKillsText;
     public TextMeshProUGUI walletCronosText;
 
     private void Start()
@@ -19,6 +20,9 @@ public class MainMenuUI : MonoBehaviour
 
         if (bestTimeText != null)
             bestTimeText.text = $"{SaveManager.Instance.BestTime:F1}s";
+
+        if (bestKillsText != null)
+            bestKillsText.text = $"Record: {SaveManager.Instance.BestKills}";
 
         if (walletCronosText != null)
             walletCronosText.text = SaveManager.Instance.Cronos.ToString();

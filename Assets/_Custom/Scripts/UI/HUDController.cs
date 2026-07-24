@@ -110,8 +110,8 @@ public class HUDController : MonoBehaviour
         {
             int kills = EnemyManager.Instance?.KillCount ?? 0;
             float time = SpawnManager.Instance?.GameTime ?? 0f;
-            runCronos = kills + Mathf.FloorToInt(time * 0.5f);
+            runCronos = GameManager.CalculateRunCronos(kills, time);
         }
-        runCronosText.text = $"⟳ {runCronos}";
+        runCronosText.text = $"\u27F3 {runCronos}";
     }
 }
