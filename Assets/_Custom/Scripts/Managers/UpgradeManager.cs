@@ -16,6 +16,10 @@ public class UpgradeManager : MonoBehaviour
     private int totalKills = 0;
     private bool isWindowOpen = false;
 
+    private readonly List<UpgradeData> selectedBuffer = new List<UpgradeData>(4);
+    private readonly List<UpgradeData> commonPoolBuffer = new List<UpgradeData>(16);
+    private readonly List<UpgradeData> rarePoolBuffer = new List<UpgradeData>(16);
+
     public event Action<List<UpgradeData>> OnUpgradeWindowOpened;
     public event Action OnUpgradeWindowClosed;
 
@@ -23,7 +27,9 @@ public class UpgradeManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            // Solo el componente: los managers comparten el GameObject "Managers" de 1_Game,
+            // y Destroy(gameObject) se llevaria por delante a todos los demas.
+            Destroy(this);
             return;
         }
         Instance = this;
@@ -36,6 +42,21 @@ public class UpgradeManager : MonoBehaviour
             EnemyManager.Instance.OnEnemyKilled += HandleEnemyKilled;
             EnemyManager.Instance.OnKillsThresholdReached += HandleKillsThreshold;
         }
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnGameStateChanged += HandleGameStateChanged;
+        }
+    }
+
+    private void HandleGameStateChanged(GameManager.GameState state)
+    {
+        // Con el drenaje parcial activo el reloj puede llegar a 0 con la ventana abierta:
+        // hay que cerrarla sin devolver el juego a Playing.
+        if (state == GameManager.GameState.GameOver && isWindowOpen)
+        {
+            CloseUpgradeWindow(resumeGame: false);
+        }
     }
 
     private void OnDestroy()
@@ -45,6 +66,13 @@ public class UpgradeManager : MonoBehaviour
             EnemyManager.Instance.OnEnemyKilled -= HandleEnemyKilled;
             EnemyManager.Instance.OnKillsThresholdReached -= HandleKillsThreshold;
         }
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnGameStateChanged -= HandleGameStateChanged;
+        }
+
+        if (Instance == this) Instance = null;
     }
 
     private void HandleEnemyKilled(EnemyBase enemy, bool isElite)
@@ -92,7 +120,7 @@ public class UpgradeManager : MonoBehaviour
 
     public void ApplyUpgrade(UpgradeData upgrade)
     {
-        if (!isWindowOpen) return;
+        if (!isWindowOpen || upgrade == null) return;
 
         acquiredUpgrades.Add(upgrade.id);
         UpgradeEffects.ApplyUpgrade(upgrade);
@@ -109,7 +137,7 @@ public class UpgradeManager : MonoBehaviour
         totalKills = 0;
     }
 
-    private void CloseUpgradeWindow()
+    private void CloseUpgradeWindow(bool resumeGame = true)
     {
         if (!isWindowOpen) return;
 
@@ -118,20 +146,22 @@ public class UpgradeManager : MonoBehaviour
         TimeManager.Instance?.SetDrainMultiplier(1f);
         AudioManager.Instance?.FadeMusicTo(1f, 0.3f);
 
-        GameManager.Instance?.ResumeGame();
+        if (resumeGame) GameManager.Instance?.ResumeGame();
         OnUpgradeWindowClosed?.Invoke();
     }
 
     private List<UpgradeData> GetRandomUpgrades(int count, bool rare)
     {
-        List<UpgradeData> selected = new List<UpgradeData>();
+        // Los tres buffers se reutilizan entre ventanas en vez de crear listas nuevas cada vez.
+        selectedBuffer.Clear();
+        Refill(commonPoolBuffer, commonUpgrades);
+        Refill(rarePoolBuffer, rareUpgrades);
 
         if (rare)
         {
-            selected = GetRandomUpgradesFromPool(count, rareUpgrades);
+            DrawFrom(rarePoolBuffer, count);
             // Si faltan raras, rellenar con comunes
-            if (selected.Count < count)
-                selected.AddRange(GetRandomUpgradesFromPool(count - selected.Count, commonUpgrades));
+            DrawFrom(commonPoolBuffer, count - selectedBuffer.Count);
         }
         else
         {
@@ -139,44 +169,42 @@ public class UpgradeManager : MonoBehaviour
             float rareChance = 0.05f + ((totalKills / 10) * 0.02f);
             rareChance = Mathf.Clamp(rareChance, 0.05f, 0.60f);
 
-            List<UpgradeData> tempCommonPool = new List<UpgradeData>(commonUpgrades);
-            List<UpgradeData> tempRarePool = new List<UpgradeData>(rareUpgrades);
-
             for (int i = 0; i < count; i++)
             {
                 bool rollRare = UnityEngine.Random.value <= rareChance;
 
-                if (rollRare && tempRarePool.Count > 0)
-                {
-                    int idx = UnityEngine.Random.Range(0, tempRarePool.Count);
-                    selected.Add(tempRarePool[idx]);
-                    tempRarePool.RemoveAt(idx);
-                }
-                else if (tempCommonPool.Count > 0)
-                {
-                    int idx = UnityEngine.Random.Range(0, tempCommonPool.Count);
-                    selected.Add(tempCommonPool[idx]);
-                    tempCommonPool.RemoveAt(idx);
-                }
+                if (rollRare && rarePoolBuffer.Count > 0)
+                    DrawFrom(rarePoolBuffer, 1);
+                else if (commonPoolBuffer.Count > 0)
+                    DrawFrom(commonPoolBuffer, 1);
             }
         }
 
-        return selected;
+        return selectedBuffer;
     }
 
-    private List<UpgradeData> GetRandomUpgradesFromPool(int count, List<UpgradeData> sourcePool)
+    private static void Refill(List<UpgradeData> buffer, List<UpgradeData> source)
     {
-        List<UpgradeData> pool = new List<UpgradeData>(sourcePool);
-        List<UpgradeData> selected = new List<UpgradeData>();
+        buffer.Clear();
+        if (source == null) return;
 
+        for (int i = 0; i < source.Count; i++)
+        {
+            if (source[i] != null) buffer.Add(source[i]);
+        }
+    }
+
+    private void DrawFrom(List<UpgradeData> pool, int count)
+    {
         for (int i = 0; i < count; i++)
         {
-            if (pool.Count == 0) break;
-            int idx = UnityEngine.Random.Range(0, pool.Count);
-            selected.Add(pool[idx]);
-            pool.RemoveAt(idx);
-        }
+            if (pool.Count == 0) return;
 
-        return selected;
+            int idx = UnityEngine.Random.Range(0, pool.Count);
+            selectedBuffer.Add(pool[idx]);
+
+            pool[idx] = pool[pool.Count - 1];
+            pool.RemoveAt(pool.Count - 1);
+        }
     }
 }

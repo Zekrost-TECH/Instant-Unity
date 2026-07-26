@@ -75,3 +75,11 @@ crashlytics-build.properties
 ehthumbs.db
 Thumbs.db
 Desktop.ini
+
+# Config local de MCP / Claude Code (rutas absolutas de la maquina)
+.mcp.json
+.claude/
+
+# Capturas generadas por manage_camera
+/Assets/Screenshots/
+/Assets/Screenshots.meta

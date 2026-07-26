@@ -16,7 +16,7 @@ public class EnemyShooter : EnemyBase
         shootTimer = shootCooldown;
     }
 
-    protected override void UpdateMovement()
+    protected override void UpdateMovement(float deltaTime)
     {
         if (playerTransform == null)
         {
@@ -24,14 +24,16 @@ public class EnemyShooter : EnemyBase
             return;
         }
 
-        Vector2 directionToPlayer = (playerTransform.position - transform.position).normalized;
-        float distanceToPlayer = Vector2.Distance(transform.position, playerTransform.position);
+        Vector2 toPlayer = (Vector2)playerTransform.position - rb.position;
+        float distanceSqr = toPlayer.sqrMagnitude;
+        Vector2 directionToPlayer = distanceSqr > 0.000001f ? toPlayer / Mathf.Sqrt(distanceSqr) : Vector2.zero;
 
-        if (distanceToPlayer > stoppingDistance)
+        // Comparaciones al cuadrado: evitan dos raíces cuadradas por enemigo y paso de física
+        if (distanceSqr > stoppingDistance * stoppingDistance)
         {
             rb.linearVelocity = directionToPlayer * moveSpeed;
         }
-        else if (distanceToPlayer < retreatDistance)
+        else if (distanceSqr < retreatDistance * retreatDistance)
         {
             rb.linearVelocity = -directionToPlayer * moveSpeed;
         }
@@ -40,17 +42,15 @@ public class EnemyShooter : EnemyBase
             rb.linearVelocity = Vector2.zero;
         }
 
-        if (directionToPlayer != Vector2.zero)
-        {
-            transform.up = directionToPlayer;
-        }
-
-        UpdateShooting(directionToPlayer);
+        FaceDirection(directionToPlayer);
+        UpdateShooting(directionToPlayer, deltaTime);
     }
 
-    private void UpdateShooting(Vector2 directionToPlayer)
+    private void UpdateShooting(Vector2 directionToPlayer, float deltaTime)
     {
-        shootTimer -= Time.deltaTime;
+        // Antes usaba Time.deltaTime dentro de un paso de física: el cooldown
+        // se desfasaba con el framerate.
+        shootTimer -= deltaTime;
         if (shootTimer <= 0f)
         {
             shootTimer = shootCooldown;
@@ -65,8 +65,8 @@ public class EnemyShooter : EnemyBase
             EnemyProjectile projectile = SpawnManager.Instance.GetProjectile();
             if (projectile != null)
             {
-                projectile.transform.position = transform.position + (Vector3)directionToPlayer * 0.5f;
-                projectile.Launch(directionToPlayer);
+                Vector3 muzzle = (Vector3)rb.position + (Vector3)directionToPlayer * 0.5f;
+                projectile.Launch(muzzle, directionToPlayer);
             }
         }
     }

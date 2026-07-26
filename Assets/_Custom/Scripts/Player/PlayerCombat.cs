@@ -28,6 +28,7 @@ public class PlayerCombat : MonoBehaviour
     public Transform rangeVisual;
 
     private PlayerMovement movement;
+    private SpriteRenderer rangeSpriteRenderer;
     private float attackTimer = 0f;
     private float lastRange;
 
@@ -80,7 +81,9 @@ public class PlayerCombat : MonoBehaviour
     {
         if (rangeVisual != null)
         {
-            SpriteRenderer spriteRenderer = rangeVisual.GetComponent<SpriteRenderer>();
+            if (rangeSpriteRenderer == null) rangeSpriteRenderer = rangeVisual.GetComponent<SpriteRenderer>();
+
+            SpriteRenderer spriteRenderer = rangeSpriteRenderer;
             if (spriteRenderer != null && spriteRenderer.sprite != null)
             {
                 // Obtenemos el tamaño real nativo en unidades de mundo del Sprite (ancho en píxeles / Pixels Per Unit)
@@ -123,7 +126,7 @@ public class PlayerCombat : MonoBehaviour
         if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameManager.GameState.Playing) return false;
 
         float damageToApply = customDamage > 0f ? customDamage : hitTimePenalty;
-        TimeManager.Instance.SubtractTime(damageToApply);
+        if (TimeManager.Instance != null) TimeManager.Instance.SubtractTime(damageToApply);
         movement.TriggerHitInvulnerability();
 
         // Jugar GameFeel: Screen Shake, impacto visual fuerte

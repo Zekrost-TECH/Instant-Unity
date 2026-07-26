@@ -10,6 +10,7 @@ public class EnemyProjectile : MonoBehaviour
 
     private Rigidbody2D rb;
     private float spawnTime;
+    private bool released;
 
     private void Awake()
     {
@@ -19,12 +20,20 @@ public class EnemyProjectile : MonoBehaviour
     private void OnEnable()
     {
         spawnTime = Time.time;
+        released = false;
     }
 
-    public void Launch(Vector2 direction)
+    /// <summary>
+    /// Coloca y lanza. Con Auto Sync Transforms desactivado hay que mover también el
+    /// Rigidbody2D, o el proyectil sale desde su posición anterior del pool.
+    /// </summary>
+    public void Launch(Vector3 position, Vector2 direction)
     {
-        rb.linearVelocity = direction.normalized * speed;
+        transform.position = position;
+        if (rb != null) rb.position = position;
+
         transform.up = direction;
+        if (rb != null) rb.linearVelocity = direction.normalized * speed;
     }
 
     private void Update()
@@ -61,6 +70,11 @@ public class EnemyProjectile : MonoBehaviour
 
     private void ReleaseToPool()
     {
+        // Guardia contra doble Release: el pool usa collectionCheck:false, así que una
+        // segunda devolución metería la misma instancia dos veces en el pool.
+        if (released) return;
+        released = true;
+
         if (SpawnManager.Instance != null)
         {
             SpawnManager.Instance.ReleaseProjectile(this);

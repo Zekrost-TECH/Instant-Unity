@@ -21,6 +21,9 @@ public class GameOverController : MonoBehaviour
     public Button reviveButton;
     public Button exitToMenuButton;
 
+    [Tooltip("Objeto opcional tipo 'Viendo anuncio...' que se muestra mientras dura el anuncio.")]
+    public GameObject adPlayingLabel;
+
     private void Start()
     {
         if (gameOverPanel != null)
@@ -92,13 +95,37 @@ public class GameOverController : MonoBehaviour
 
     private void OnReviveClicked()
     {
-        if (gameOverPanel != null)
-            gameOverPanel.SetActive(false);
+        // El AdsManager no está en ninguna escena: sin esto Instance es null y el
+        // botón se limitaba a ocultar el panel dejando la partida muerta.
+        AdsManager ads = AdsManager.Ensure();
+        if (ads == null) return;
 
-        AdsManager.Instance?.ShowRewardedAd(() =>
-        {
-            GameManager.Instance?.Revive();
-        });
+        // El panel se queda visible durante el anuncio; sólo se cierra al cobrar la
+        // recompensa. Los botones se bloquean para no encadenar pulsaciones.
+        SetButtonsInteractable(false);
+        if (adPlayingLabel != null) adPlayingLabel.SetActive(true);
+
+        ads.ShowRewardedAd(
+            onRewardGranted: () =>
+            {
+                if (adPlayingLabel != null) adPlayingLabel.SetActive(false);
+                if (gameOverPanel != null) gameOverPanel.SetActive(false);
+                SetButtonsInteractable(true);
+                GameManager.Instance?.Revive();
+            },
+            grantCronos: false,   // la recompensa es la partida, no monedas
+            onFailed: () =>
+            {
+                if (adPlayingLabel != null) adPlayingLabel.SetActive(false);
+                SetButtonsInteractable(true);
+            });
+    }
+
+    private void SetButtonsInteractable(bool value)
+    {
+        if (restartButton != null) restartButton.interactable = value;
+        if (reviveButton != null) reviveButton.interactable = value;
+        if (exitToMenuButton != null) exitToMenuButton.interactable = value;
     }
 
     private void OnExitToMenuClicked()

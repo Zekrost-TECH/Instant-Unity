@@ -17,6 +17,8 @@ public class DashButtonController : MonoBehaviour
     private PlayerInput playerInput;
     private TooltipController tooltipController;
     private bool tooltipShown = false;
+    private float lastFill = -1f;
+    private bool lastReadyState = false;
 
     private void Start()
     {
@@ -40,11 +42,18 @@ public class DashButtonController : MonoBehaviour
         float cooldownRatio = playerMovement.DashCooldownRatio;
         bool wasReady = cooldownRatio >= 1f;
 
-        if (cooldownRing != null)
+        // Escribir en un Graphic marca el Canvas como dirty: sólo lo hacemos si el valor cambió.
+        if (cooldownRing != null && !Mathf.Approximately(cooldownRatio, lastFill))
+        {
+            lastFill = cooldownRatio;
             cooldownRing.fillAmount = cooldownRatio;
+        }
 
-        if (buttonImage != null)
+        if (buttonImage != null && wasReady != lastReadyState)
+        {
+            lastReadyState = wasReady;
             buttonImage.color = wasReady ? readyColor : cooldownColor;
+        }
 
         if (wasReady && !tooltipShown && tooltipController != null)
         {

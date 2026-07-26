@@ -18,28 +18,58 @@ public class GeometryRenderer : MonoBehaviour
     public float borderWidth = 0.05f;
     public Color borderColor = Color.white;
 
+    private const int CircleSegments = 32;
+
+    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+    private static readonly int ColorId = Shader.PropertyToID("_Color");
+
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
+    private Mesh generatedMesh;
+    private MaterialPropertyBlock propertyBlock;
 
     private void Awake()
     {
-        meshFilter = GetComponent<MeshFilter>();
-        meshRenderer = GetComponent<MeshRenderer>();
+        CacheComponents();
         GenerateMesh();
+    }
+
+    private void OnDestroy()
+    {
+        // La malla se crea por instancia: sin esto queda huérfana en memoria.
+        if (generatedMesh == null) return;
+
+        if (Application.isPlaying) Destroy(generatedMesh);
+        else DestroyImmediate(generatedMesh);
+
+        generatedMesh = null;
     }
 
     private void OnValidate()
     {
+        CacheComponents();
+        GenerateMesh();
+    }
+
+    private void CacheComponents()
+    {
         if (meshFilter == null) meshFilter = GetComponent<MeshFilter>();
         if (meshRenderer == null) meshRenderer = GetComponent<MeshRenderer>();
-        GenerateMesh();
+        if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();
     }
 
     public void GenerateMesh()
     {
         if (meshFilter == null) return;
 
-        Mesh mesh = new Mesh();
+        // Se reutiliza siempre la misma Mesh. Crear una nueva en cada llamada (Awake +
+        // cada cambio del Inspector vía OnValidate) dejaba mallas huérfanas sin liberar.
+        if (generatedMesh == null)
+        {
+            generatedMesh = new Mesh { name = "GeneratedShape" };
+            generatedMesh.MarkDynamic();
+        }
+
         Vector3[] vertices;
         int[] triangles;
 
@@ -53,10 +83,6 @@ public class GeometryRenderer : MonoBehaviour
                     new Vector3(size * 0.577f, -size * 0.5f, 0f)
                 };
                 triangles = new int[] { 0, 1, 2 };
-                break;
-            case ShapeType.Circle:
-                vertices = GenerateCircleVertices(32);
-                triangles = GenerateCircleTriangles(32);
                 break;
             case ShapeType.Diamond:
                 vertices = new Vector3[]
@@ -79,26 +105,27 @@ public class GeometryRenderer : MonoBehaviour
                 triangles = new int[] { 0, 1, 2, 0, 2, 3 };
                 break;
             case ShapeType.Hexagon:
-                vertices = GenerateHexagonVertices();
-                triangles = GenerateHexagonTriangles();
+                vertices = GenerateFanVertices(6);
+                triangles = GenerateFanTriangles(6);
                 break;
+            case ShapeType.Circle:
             default:
-                vertices = GenerateCircleVertices(32);
-                triangles = GenerateCircleTriangles(32);
+                vertices = GenerateFanVertices(CircleSegments);
+                triangles = GenerateFanTriangles(CircleSegments);
                 break;
         }
 
-        mesh.vertices = vertices;
-        mesh.triangles = triangles;
-        mesh.RecalculateNormals();
-        mesh.RecalculateBounds();
+        generatedMesh.Clear();
+        generatedMesh.vertices = vertices;
+        generatedMesh.triangles = triangles;
+        generatedMesh.RecalculateNormals();
+        generatedMesh.RecalculateBounds();
 
-        meshFilter.mesh = mesh;
-        if (meshRenderer != null)
-            meshRenderer.material.color = color;
+        meshFilter.sharedMesh = generatedMesh;
+        ApplyColor();
     }
 
-    private Vector3[] GenerateCircleVertices(int segments)
+    private Vector3[] GenerateFanVertices(int segments)
     {
         Vector3[] vertices = new Vector3[segments + 1];
         vertices[0] = Vector3.zero;
@@ -110,7 +137,7 @@ public class GeometryRenderer : MonoBehaviour
         return vertices;
     }
 
-    private int[] GenerateCircleTriangles(int segments)
+    private int[] GenerateFanTriangles(int segments)
     {
         int[] triangles = new int[segments * 3];
         for (int i = 0; i < segments; i++)
@@ -122,34 +149,22 @@ public class GeometryRenderer : MonoBehaviour
         return triangles;
     }
 
-    private Vector3[] GenerateHexagonVertices()
+    private void ApplyColor()
     {
-        Vector3[] vertices = new Vector3[7];
-        vertices[0] = Vector3.zero;
-        for (int i = 0; i < 6; i++)
-        {
-            float angle = i * Mathf.PI / 3f;
-            vertices[i + 1] = new Vector3(Mathf.Cos(angle) * size, Mathf.Sin(angle) * size, 0f);
-        }
-        return vertices;
-    }
+        if (meshRenderer == null) return;
 
-    private int[] GenerateHexagonTriangles()
-    {
-        int[] triangles = new int[18];
-        for (int i = 0; i < 6; i++)
-        {
-            triangles[i * 3] = 0;
-            triangles[i * 3 + 1] = i + 1;
-            triangles[i * 3 + 2] = (i + 1) % 6 + 1;
-        }
-        return triangles;
+        // MaterialPropertyBlock en vez de .material: no instancia un material por
+        // renderer (que además nunca se liberaba) y no rompe el batching.
+        CacheComponents();
+        meshRenderer.GetPropertyBlock(propertyBlock);
+        propertyBlock.SetColor(BaseColorId, color);
+        propertyBlock.SetColor(ColorId, color);
+        meshRenderer.SetPropertyBlock(propertyBlock);
     }
 
     public void SetColor(Color newColor)
     {
         color = newColor;
-        if (meshRenderer != null)
-            meshRenderer.material.color = color;
+        ApplyColor();
     }
 }

@@ -22,45 +22,68 @@ public class HitVFXManager : MonoBehaviour
     public AnimationCurve widthCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
     public AnimationCurve alphaCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
 
-    private ObjectPool<GameObject> pool;
+    private ObjectPool<HitBeam> pool;
+    private Transform beamContainer;
 
     private void Awake()
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            // Solo el componente: los managers comparten el GameObject "Managers" de 1_Game,
+            // y Destroy(gameObject) se llevaria por delante a todos los demas.
+            Destroy(this);
             return;
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        pool = new ObjectPool<GameObject>(
-            createFunc: () => Instantiate(beamPrefab),
-            actionOnGet: go => go.SetActive(true),
-            actionOnRelease: go => go.SetActive(false),
-            actionOnDestroy: go => Destroy(go),
+        // Los beams instanciados viven bajo un contenedor persistente. Sin esto se
+        // destruyen al cambiar de escena y el pool devuelve referencias muertas.
+        beamContainer = new GameObject("HitBeamPool").transform;
+        beamContainer.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+        DontDestroyOnLoad(beamContainer.gameObject);
+
+        pool = new ObjectPool<HitBeam>(
+            createFunc: CreateBeam,
+            actionOnGet: beam => beam.gameObject.SetActive(true),
+            actionOnRelease: beam => beam.gameObject.SetActive(false),
+            actionOnDestroy: beam => { if (beam != null) Destroy(beam.gameObject); },
             collectionCheck: false,
             defaultCapacity: poolCapacity,
             maxSize: poolMaxSize
         );
     }
 
+    private void OnDestroy()
+    {
+        if (Instance != this) return;
+
+        pool?.Clear();
+        if (beamContainer != null) Destroy(beamContainer.gameObject);
+        Instance = null;
+    }
+
+    private HitBeam CreateBeam()
+    {
+        GameObject instance = Instantiate(beamPrefab, beamContainer);
+        HitBeam beam = instance.GetComponent<HitBeam>();
+        if (beam == null) beam = instance.AddComponent<HitBeam>();
+        return beam;
+    }
+
     public void SpawnBeam(Transform origin, Vector3 hitPoint)
     {
         if (pool == null || beamPrefab == null || origin == null) return;
 
-        GameObject beam = pool.Get();
-        beam.transform.SetParent(null, true);
-        beam.transform.position = Vector3.zero;
-        beam.transform.rotation = Quaternion.identity;
+        HitBeam beam = pool.Get();
+        if (beam == null) return;
 
-        HitBeam hitBeam = beam.GetComponent<HitBeam>();
-        if (hitBeam != null)
-            hitBeam.Play(origin, hitPoint);
+        beam.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+        beam.Play(origin, hitPoint);
     }
 
-    internal void ReturnToPool(GameObject go)
+    internal void ReturnToPool(HitBeam beam)
     {
-        if (pool != null) pool.Release(go);
+        if (pool != null && beam != null) pool.Release(beam);
     }
 }

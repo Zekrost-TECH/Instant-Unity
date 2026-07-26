@@ -18,7 +18,7 @@ public class EnemyFast : EnemyBase
         spawnTime = Time.time;
     }
 
-    protected override void UpdateMovement()
+    protected override void UpdateMovement(float deltaTime)
     {
         if (playerTransform == null)
         {
@@ -26,17 +26,12 @@ public class EnemyFast : EnemyBase
             return;
         }
 
-        Vector2 directionToPlayer = (playerTransform.position - transform.position).normalized;
+        Vector2 directionToPlayer = ((Vector2)playerTransform.position - rb.position).normalized;
         Vector2 perpendicular = new Vector2(-directionToPlayer.y, directionToPlayer.x);
 
         float zigzagOffset = Mathf.Sin((Time.time - spawnTime) * zigzagFrequency) * zigzagAmplitude;
-        
-        Vector2 movement = (directionToPlayer * moveSpeed) + (perpendicular * zigzagOffset);
-        rb.linearVelocity = movement;
 
-        if (directionToPlayer != Vector2.zero)
-        {
-            transform.up = directionToPlayer;
-        }
+        rb.linearVelocity = (directionToPlayer * moveSpeed) + (perpendicular * zigzagOffset);
+        FaceDirection(directionToPlayer);
     }
 }

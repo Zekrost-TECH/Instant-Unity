@@ -75,25 +75,21 @@ public class PlayerMovement : MonoBehaviour
     private void ApplyEquippedSkin()
     {
         SkinRenderer skinRenderer = GetComponent<SkinRenderer>();
-        if (skinRenderer != null && SaveManager.Instance != null)
+        if (skinRenderer != null) skinRenderer.ApplySkin();
+
+        // El color sale del catálogo de SkinManager, no de un switch duplicado aquí:
+        // añadir una skin nueva es un solo cambio, en el catálogo.
+        SkinManager manager = SkinManager.Ensure();
+        if (manager == null) return;
+
+        SkinDefinition equipped = manager.GetEquippedSkinDefinition();
+        if (equipped == null) return;
+
+        SpriteRenderer sr = GetComponentInChildren<SpriteRenderer>();
+        if (sr != null)
         {
-            skinRenderer.ApplySkin();
-        }
-        else
-        {
-            // Fallback: cambiar color directamente si no hay SkinRenderer
-            SpriteRenderer sr = GetComponent<SpriteRenderer>();
-            if (sr != null && SaveManager.Instance != null)
-            {
-                switch (SaveManager.Instance.EquippedSkin)
-                {
-                    case "Cyan": sr.color = Color.cyan; break;
-                    case "Gold": sr.color = new Color(1f, 0.84f, 0f); break;
-                    case "Purple": sr.color = new Color(0.6f, 0.2f, 0.8f); break;
-                    case "Red": sr.color = Color.red; break;
-                    case "Green": sr.color = Color.green; break;
-                }
-            }
+            if (equipped.icon != null) sr.sprite = equipped.icon;
+            sr.color = equipped.color;
         }
     }
 
@@ -150,13 +146,19 @@ public class PlayerMovement : MonoBehaviour
             rb.linearVelocity = playerInput.MoveInput.normalized * moveSpeed;
         }
 
-        // Aplicar límite de zona jugable rectangular (dinámica con la cámara o fija)
-        Vector2 nextPosition = rb.position + rb.linearVelocity * Time.fixedDeltaTime;
+        ClampToPlayArea();
+    }
+
+    private void ClampToPlayArea()
+    {
         float halfWidth, halfHeight;
         Vector2 centerPoint = Vector2.zero;
 
-        if (bindToCameraViewport && mainCamera != null)
+        if (bindToCameraViewport)
         {
+            if (mainCamera == null) mainCamera = Camera.main;
+            if (mainCamera == null) return;
+
             halfHeight = mainCamera.orthographicSize - screenBorderPadding;
             halfWidth = (mainCamera.orthographicSize * mainCamera.aspect) - screenBorderPadding;
             centerPoint = mainCamera.transform.position;
@@ -167,18 +169,50 @@ public class PlayerMovement : MonoBehaviour
             halfHeight = playAreaHeight / 2f;
         }
 
-        // Clampar posición física en los ejes X y Y de forma independiente
-        float clampedX = Mathf.Clamp(nextPosition.x, centerPoint.x - halfWidth, centerPoint.x + halfWidth);
-        float clampedY = Mathf.Clamp(nextPosition.y, centerPoint.y - halfHeight, centerPoint.y + halfHeight);
-        rb.position = new Vector2(clampedX, clampedY);
+        float minX = centerPoint.x - halfWidth;
+        float maxX = centerPoint.x + halfWidth;
+        float minY = centerPoint.y - halfHeight;
+        float maxY = centerPoint.y + halfHeight;
 
-        // Cancelar velocidad exterior en los bordes para permitir deslizamiento suave en las esquinas y lados
-        Vector2 currentVelocity = rb.linearVelocity;
-        if (nextPosition.x > centerPoint.x + halfWidth && currentVelocity.x > 0f) currentVelocity.x = 0f;
-        if (nextPosition.x < centerPoint.x - halfWidth && currentVelocity.x < 0f) currentVelocity.x = 0f;
-        if (nextPosition.y > centerPoint.y + halfHeight && currentVelocity.y > 0f) currentVelocity.y = 0f;
-        if (nextPosition.y < centerPoint.y - halfHeight && currentVelocity.y < 0f) currentVelocity.y = 0f;
-        rb.linearVelocity = currentVelocity;
+        // Se predice el paso de física para saber si el jugador cruzaría el borde.
+        // Sólo se corrige la posición del eje infractor: escribir rb.position con la
+        // posición predicha en cada FixedUpdate hacía que el motor volviera a integrar
+        // la velocidad encima, moviendo al jugador al doble de moveSpeed.
+        Vector2 position = rb.position;
+        Vector2 velocity = rb.linearVelocity;
+        Vector2 predicted = position + velocity * Time.fixedDeltaTime;
+        bool corrected = false;
+
+        if (predicted.x > maxX)
+        {
+            position.x = maxX;
+            if (velocity.x > 0f) velocity.x = 0f;
+            corrected = true;
+        }
+        else if (predicted.x < minX)
+        {
+            position.x = minX;
+            if (velocity.x < 0f) velocity.x = 0f;
+            corrected = true;
+        }
+
+        if (predicted.y > maxY)
+        {
+            position.y = maxY;
+            if (velocity.y > 0f) velocity.y = 0f;
+            corrected = true;
+        }
+        else if (predicted.y < minY)
+        {
+            position.y = minY;
+            if (velocity.y < 0f) velocity.y = 0f;
+            corrected = true;
+        }
+
+        if (!corrected) return;
+
+        rb.position = position;
+        rb.linearVelocity = velocity;
     }
 
     private void TryStartDash()
@@ -191,8 +225,11 @@ public class PlayerMovement : MonoBehaviour
 
             dashDirection = playerInput.MoveInput != Vector2.zero ? playerInput.MoveInput.normalized : lastMoveDirection;
 
-            AudioManager.Instance?.PlaySFX(AudioManager.Instance?.playerDashSFX, 0.8f);
-            ParticleManager.Instance?.SpawnDashTrail(transform.position, dashDirection);
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlaySFX(AudioManager.Instance.playerDashSFX, 0.8f);
+
+            if (ParticleManager.Instance != null)
+                ParticleManager.Instance.SpawnDashTrail(transform.position, dashDirection);
         }
     }
 

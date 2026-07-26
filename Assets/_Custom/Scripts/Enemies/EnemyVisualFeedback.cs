@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer))]
@@ -8,7 +7,7 @@ public class EnemyVisualFeedback : MonoBehaviour
     public float hitFlashDuration = 0.1f;
     private Color baseColor;
     private SpriteRenderer sr;
-    private Coroutine flashCoroutine;
+    private float flashTimer;
 
     [Header("Elite Glow")]
     public bool isEliteGlow = false;
@@ -47,8 +46,22 @@ public class EnemyVisualFeedback : MonoBehaviour
         glowTransform = glowObj.transform;
     }
 
-    private void Update()
+    /// <summary>
+    /// Llamado por EnemyManager, no por Unity: con muchos enemigos en pantalla, N
+    /// callbacks Update managed cuestan más que el trabajo que hacen.
+    /// </summary>
+    public void Tick(float deltaTime)
     {
+        if (flashTimer > 0f)
+        {
+            flashTimer -= deltaTime;
+            if (flashTimer <= 0f)
+            {
+                flashTimer = 0f;
+                if (sr != null) sr.color = baseColor;
+            }
+        }
+
         if (isEliteGlow && glowTransform != null)
         {
             float t = Mathf.PingPong(Time.time / glowCycleDuration, 1f);
@@ -57,26 +70,28 @@ public class EnemyVisualFeedback : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// El enemigo vuelve al pool: si el flash seguía activo, el sprite se quedaría
+    /// blanco para siempre en la siguiente reutilización.
+    /// </summary>
+    private void OnDisable()
+    {
+        flashTimer = 0f;
+        if (sr != null) sr.color = baseColor;
+    }
+
     public void TriggerHitFlash()
     {
         if (sr == null) return;
 
-        if (flashCoroutine != null)
-            StopCoroutine(flashCoroutine);
-        flashCoroutine = StartCoroutine(HitFlashCoroutine());
-    }
-
-    private IEnumerator HitFlashCoroutine()
-    {
+        flashTimer = hitFlashDuration;
         sr.color = Color.white;
-        yield return new WaitForSecondsRealtime(hitFlashDuration);
-        sr.color = baseColor;
     }
 
     public void SetBaseColor(Color color)
     {
         baseColor = color;
-        if (sr != null && flashCoroutine == null)
+        if (sr != null && flashTimer <= 0f)
             sr.color = baseColor;
     }
 

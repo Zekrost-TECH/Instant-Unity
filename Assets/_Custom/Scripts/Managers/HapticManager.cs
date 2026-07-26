@@ -8,10 +8,17 @@ public class HapticManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            // Solo el componente: los managers comparten el GameObject "Managers" de 1_Game,
+            // y Destroy(gameObject) se llevaria por delante a todos los demas.
+            Destroy(this);
             return;
         }
         Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     public void TriggerDamage()

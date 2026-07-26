@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(CircleCollider2D))]
@@ -17,6 +16,7 @@ public class ToxicZone : MonoBehaviour
 
     private float damageTimer = 0f;
     private PlayerCombat playerCombat;
+    private Transform borderTransform;
 
     private void Start()
     {
@@ -26,16 +26,19 @@ public class ToxicZone : MonoBehaviour
             areaRenderer.color = toxicColor;
 
         if (borderRenderer != null)
+        {
             borderRenderer.color = new Color(toxicColor.r, toxicColor.g, toxicColor.b, 0.8f);
+            borderTransform = borderRenderer.transform;
+        }
     }
 
     private void Update()
     {
-        if (borderRenderer != null)
-            borderRenderer.transform.Rotate(0f, 0f, rotationSpeed * Time.deltaTime);
-
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
             return;
+
+        if (borderTransform != null)
+            borderTransform.Rotate(0f, 0f, rotationSpeed * Time.deltaTime);
 
         damageTimer -= Time.deltaTime;
         if (damageTimer <= 0f && playerCombat != null)
@@ -43,6 +46,13 @@ public class ToxicZone : MonoBehaviour
             damageTimer = damageInterval;
             playerCombat.TakeDamageFromEnemy(timeDamagePerSecond * damageInterval);
         }
+    }
+
+    private void OnDisable()
+    {
+        // Si la zona se desactiva mientras el jugador está dentro, OnTriggerExit2D no llega.
+        playerCombat = null;
+        damageTimer = 0f;
     }
 
     private void OnTriggerEnter2D(Collider2D other)

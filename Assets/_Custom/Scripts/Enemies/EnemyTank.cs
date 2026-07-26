@@ -6,7 +6,7 @@ public class EnemyTank : EnemyBase
     [Tooltip("Velocidad de persecución (más lenta que el Fodder).")]
     public float moveSpeed = 0.8f;
 
-    protected override void UpdateMovement()
+    protected override void UpdateMovement(float deltaTime)
     {
         if (playerTransform == null)
         {
@@ -14,12 +14,8 @@ public class EnemyTank : EnemyBase
             return;
         }
 
-        Vector2 direction = (playerTransform.position - transform.position).normalized;
+        Vector2 direction = ((Vector2)playerTransform.position - rb.position).normalized;
         rb.linearVelocity = direction * moveSpeed;
-
-        if (direction != Vector2.zero)
-        {
-            transform.up = direction;
-        }
+        FaceDirection(direction);
     }
 }

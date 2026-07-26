@@ -24,10 +24,43 @@ public class AudioManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            // Solo el componente: los managers comparten el GameObject "Managers" de 1_Game,
+            // y Destroy(gameObject) se llevaria por delante a todos los demas.
+            Destroy(this);
             return;
         }
         Instance = this;
+
+        // Sin AudioSource los ajustes de volumen no tendrían dónde aplicarse.
+        // Sólo se rellenan los huecos: si vienen asignados en el Inspector, se respetan.
+        if (musicSource == null)
+        {
+            musicSource = gameObject.AddComponent<AudioSource>();
+            musicSource.playOnAwake = false;
+            musicSource.loop = true;
+        }
+        if (sfxSource == null)
+        {
+            sfxSource = gameObject.AddComponent<AudioSource>();
+            sfxSource.playOnAwake = false;
+        }
+    }
+
+    /// <summary>
+    /// Crea el AudioManager si no existe. No está puesto en ninguna escena, así que sin
+    /// esto los ajustes de volumen no tendrían a quién aplicarse.
+    /// </summary>
+    public static AudioManager Ensure()
+    {
+        if (Instance != null) return Instance;
+
+        AudioManager existing = FindAnyObjectByType<AudioManager>();
+        if (existing != null) return existing;
+
+        GameObject go = new GameObject("AudioManager");
+        AudioManager manager = go.AddComponent<AudioManager>();
+        DontDestroyOnLoad(go);
+        return manager;
     }
 
     private void Start()
@@ -68,6 +101,8 @@ public class AudioManager : MonoBehaviour
         {
             TimeManager.Instance.OnTimeCritical -= HandleTimeCritical;
         }
+
+        if (Instance == this) Instance = null;
     }
 
     public void PlaySFX(AudioClip clip, float volume = 1f)

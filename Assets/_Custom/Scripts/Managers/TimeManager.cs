@@ -15,6 +15,7 @@ public class TimeManager : MonoBehaviour
     private float drainMultiplier = 1.0f;
     public float PermanentDrainModifier = 1.0f;
     private bool criticalStateNotified = false;
+    private bool timeOutNotified = false;
 
     public event Action<float> OnTimeChanged;
     public event Action OnTimeCritical;
@@ -24,7 +25,6 @@ public class TimeManager : MonoBehaviour
 
     private float nextBeepTime = 0f;
     private float beepInterval = 0.5f;
-    private AudioSource clockAudioSource;
 
     public enum TimeColorState
     {
@@ -37,15 +37,18 @@ public class TimeManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            // Solo el componente: los managers comparten el GameObject "Managers" de 1_Game,
+            // y Destroy(gameObject) se llevaria por delante a todos los demas.
+            Destroy(this);
             return;
         }
         
         Instance = this;
+    }
 
-        // AudioSource dedicado para el beep crítico
-        clockAudioSource = gameObject.AddComponent<AudioSource>();
-        clockAudioSource.playOnAwake = false;
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     private void Start()
@@ -61,8 +64,14 @@ public class TimeManager : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
-            return;
+        // Playing drena al 100%; Upgrade drena parcialmente vía drainMultiplier (pausa parcial).
+        // Cualquier otro estado congela el reloj.
+        if (GameManager.Instance != null)
+        {
+            GameManager.GameState state = GameManager.Instance.CurrentState;
+            if (state != GameManager.GameState.Playing && state != GameManager.GameState.Upgrade)
+                return;
+        }
 
         CurrentTime -= TIME_DRAIN * drainMultiplier * PermanentDrainModifier * Time.deltaTime;
         CurrentTime = Mathf.Clamp(CurrentTime, 0f, TIME_MAX);
@@ -122,6 +131,17 @@ public class TimeManager : MonoBehaviour
         UpdateTimeColorState();
     }
 
+    /// <summary>Deja el reloj al máximo. Lo usa el revivir por anuncio.</summary>
+    public void FillToMax()
+    {
+        CurrentTime = TIME_MAX;
+        criticalStateNotified = false;
+        nextBeepTime = 0f;
+        OnTimeChanged?.Invoke(CurrentTime);
+        OnTimeCriticalEnded?.Invoke();
+        UpdateTimeColorState();
+    }
+
     public void SubtractTime(float amount)
     {
         CurrentTime -= amount;
@@ -145,8 +165,10 @@ public class TimeManager : MonoBehaviour
         }
         CurrentTime = Mathf.Min(TIME_START + bonusTime, TIME_MAX);
         criticalStateNotified = false;
+        timeOutNotified = false;
         currentColorState = TimeColorState.Calm;
         nextBeepTime = 0f;
+        drainMultiplier = 1.0f;
         PermanentDrainModifier = 1.0f;
         OnTimeChanged?.Invoke(CurrentTime);
         OnTimeColorChanged?.Invoke(currentColorState);
@@ -154,15 +176,21 @@ public class TimeManager : MonoBehaviour
 
     private void CheckGameOverCondition()
     {
-        if (CurrentTime <= 0f)
+        if (CurrentTime > 0f)
         {
-            CurrentTime = 0f;
-            OnTimeOut?.Invoke();
-            
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.TriggerGameOver();
-            }
+            timeOutNotified = false;
+            return;
+        }
+
+        CurrentTime = 0f;
+        if (timeOutNotified) return;
+
+        timeOutNotified = true;
+        OnTimeOut?.Invoke();
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.TriggerGameOver();
         }
     }
 }

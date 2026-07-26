@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6469694193911707222}
   - component: {fileID: 5846464551589510652}
   - component: {fileID: -149432717181563441}
-  - component: {fileID: 680981770753337166}
+  - component: {fileID: 3159279295086998678}
   m_Layer: 6
   m_Name: EnemyElite
   m_TagString: Untagged
@@ -171,7 +171,7 @@ PolygonCollider2D:
       - {x: -0.90740514, y: -0.8861944}
       - {x: 0.89382505, y: -0.88619435}
   m_UseDelaunayMesh: 1
---- !u!114 &680981770753337166
+--- !u!114 &3159279295086998678
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -180,16 +180,34 @@ MonoBehaviour:
   m_GameObject: {fileID: 8540399230803058262}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 52620345b1b34a240b24f8d56eb794c3, type: 3}
+  m_Script: {fileID: 11500000, guid: 4faaee11e55bc1449aee1da0a9d12b33, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyShooter
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyElite
   maxHealth: 30
   timeRewardOnDeath: 10
   timeDamageToPlayer: 5
   isElite: 1
   dieOnContactWithPlayer: 0
   damageFeedback: {fileID: 0}
+  baseColor: {r: 1, g: 0, b: 0, a: 1}
+  deathParticleCount: 12
   moveSpeed: 2.5
-  shootCooldown: 2
-  stoppingDistance: 4
-  retreatDistance: 2
+  preferredDistance: 6.5
+  distanceTolerance: 1.2
+  laserDamage: 20
+  laserCooldown: 5
+  firstShotDelay: 2.5
+  telegraphDuration: 1.2
+  lockedFraction: 0.45
+  beamDuration: 0.3
+  beamLength: 30
+  beamHalfWidth: 0.4
+  maxFiringRange: 14
+  laserMaterial: {fileID: 2100000, guid: 3b604445337b7504e8f3a9a747edac35, type: 2}
+  trackingColor: {r: 1, g: 0.85, b: 0.2, a: 0.35}
+  lockedColor: {r: 1, g: 0.35, b: 0.1, a: 0.9}
+  beamColor: {r: 1, g: 0.2, b: 0.15, a: 1}
+  telegraphWidth: 0.07
+  lockedWidth: 0.14
+  laserSortingLayer: Default
+  laserSortingOrder: 90

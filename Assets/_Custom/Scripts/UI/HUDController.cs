@@ -16,6 +16,13 @@ public class HUDController : MonoBehaviour
     public Color warningColor = new Color(1f, 0.67f, 0f); // #FFAA00
     public Color dangerColor = new Color(1f, 0.2f, 0.2f); // #FF3333
 
+    private const string KillsLabel = "Kills: {0}";
+    private const string CronosLabel = "⟳ {0}";
+
+    private int lastDisplayedSeconds = int.MinValue;
+    private int lastDisplayedRunCronos = int.MinValue;
+    private float lastBarFill = -1f;
+
     private void Start()
     {
         if (TimeManager.Instance != null)
@@ -66,13 +73,22 @@ public class HUDController : MonoBehaviour
 
     private void UpdateTimer(float time)
     {
-        if (timeText != null)
-            timeText.text = Mathf.CeilToInt(time).ToString();
+        // OnTimeChanged llega cada frame: sólo tocamos los widgets cuando su valor visible cambia.
+        int seconds = Mathf.CeilToInt(time);
+        if (timeText != null && seconds != lastDisplayedSeconds)
+        {
+            lastDisplayedSeconds = seconds;
+            timeText.SetText(NumberStrings.Get(seconds));
+        }
 
         if (timeBar != null)
         {
             float fill = Mathf.Clamp01(time / TimeManager.TIME_MAX);
-            timeBar.fillAmount = fill;
+            if (!Mathf.Approximately(fill, lastBarFill))
+            {
+                lastBarFill = fill;
+                timeBar.fillAmount = fill;
+            }
         }
 
         UpdateRunCronos();
@@ -98,7 +114,7 @@ public class HUDController : MonoBehaviour
     private void UpdateKillCount(int kills)
     {
         if (killCountText != null)
-            killCountText.text = $"Kills: {kills}";
+            killCountText.SetText(KillsLabel, kills);
     }
 
     private void UpdateRunCronos()
@@ -108,10 +124,14 @@ public class HUDController : MonoBehaviour
         int runCronos = 0;
         if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameManager.GameState.Playing)
         {
-            int kills = EnemyManager.Instance?.KillCount ?? 0;
-            float time = SpawnManager.Instance?.GameTime ?? 0f;
+            int kills = EnemyManager.Instance != null ? EnemyManager.Instance.KillCount : 0;
+            float time = SpawnManager.Instance != null ? SpawnManager.Instance.GameTime : 0f;
             runCronos = GameManager.CalculateRunCronos(kills, time);
         }
-        runCronosText.text = $"\u27F3 {runCronos}";
+
+        if (runCronos == lastDisplayedRunCronos) return;
+
+        lastDisplayedRunCronos = runCronos;
+        runCronosText.SetText(CronosLabel, runCronos);
     }
 }

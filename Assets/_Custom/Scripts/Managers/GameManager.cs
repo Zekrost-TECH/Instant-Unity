@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -8,28 +9,67 @@ public class GameManager : MonoBehaviour
     public enum GameState { Menu, Playing, Paused, Upgrade, GameOver }
     public GameState CurrentState { get; private set; }
 
+    [Header("Escenas")]
+    public string gameSceneName = "1_Game";
+    public string mainMenuSceneName = "0_MainMenu";
+
     public event Action<GameState> OnGameStateChanged;
     public event Action<float, int, int, bool> OnGameOver; // time, kills, cronos, newRecord
     public event Action OnGameRestarted;
+
+    private int cronosAwardedThisRun = 0;
 
     private void Awake()
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            // Solo el componente: los managers comparten el GameObject "Managers" de 1_Game,
+            // y Destroy(gameObject) se llevaria por delante a todos los demas.
+            Destroy(this);
             return;
         }
-        
+
         Instance = this;
         CurrentState = GameState.Menu;
-        Time.timeScale = 1f; 
+        Time.timeScale = 1f;
+
+        SceneManager.sceneLoaded += HandleSceneLoaded;
+    }
+
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
+        if (Instance == this) Instance = null;
     }
 
     private void Start()
     {
-        // For Phase 1 testing, we start the game automatically.
-        // In the future, this will be called by a UI Button.
-        StartGame();
+        // Al entrar en play mode directamente en 1_Game no se dispara sceneLoaded,
+        // así que hay que arrancar aquí. Si veníamos del menú, sceneLoaded ya lo hizo.
+        if (CurrentState != GameState.Playing && SceneManager.GetActiveScene().name == gameSceneName)
+        {
+            StartGame();
+        }
+    }
+
+    /// <summary>
+    /// El GameManager sobrevive a los cambios de escena (DontDestroyOnLoad), así que su
+    /// Start sólo corre una vez. Sin esto, al volver al juego desde el menú seguía en
+    /// GameOver y todo quedaba congelado en el último frame de la partida anterior.
+    /// </summary>
+    private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == gameSceneName)
+        {
+            StartGame();
+        }
+        else if (scene.name == mainMenuSceneName)
+        {
+            // Los enemigos viven en un pool DontDestroyOnLoad: sin limpiarlos siguen
+            // registrados y reaparecen en la siguiente partida.
+            SpawnManager.Instance?.ClearAllEnemies();
+            ChangeState(GameState.Menu);
+        }
     }
 
     public static int CalculateRunCronos(int kills, float time)
@@ -43,8 +83,10 @@ public class GameManager : MonoBehaviour
 
     public void StartGame()
     {
-        ChangeState(GameState.Playing);
+        // Resetear ANTES de anunciar el estado: si no, quien escuche OnGameStateChanged
+        // lee todavía el reloj a 0 y las kills de la partida anterior.
         ResetGameSystems();
+        ChangeState(GameState.Playing);
     }
 
     public void PauseGame()
@@ -78,7 +120,12 @@ public class GameManager : MonoBehaviour
 
             int cronosGained = CalculateRunCronos(finalKills, finalTime);
 
-            SaveManager.Instance.AddCronos(cronosGained);
+            // Tras revivir se vuelve a pasar por aquí con las MISMAS kills acumuladas.
+            // Pagamos sólo la diferencia o la partida cobraría dos veces lo ya cobrado.
+            int payout = Mathf.Max(0, cronosGained - cronosAwardedThisRun);
+            cronosAwardedThisRun += payout;
+
+            SaveManager.Instance.AddCronos(payout);
             bool newRecord = SaveManager.Instance.UpdateRecords(finalTime, finalKills);
             SaveManager.Instance.SetFirstTimePlayed();
 
@@ -96,15 +143,34 @@ public class GameManager : MonoBehaviour
         OnGameRestarted?.Invoke();
     }
 
+    /// <summary>
+    /// Continúa la misma partida: kills y Cronos acumulados intactos, reloj al máximo.
+    /// No se toca EnemyManager.KillCount ni SpawnManager.GameTime a propósito.
+    /// </summary>
     public void Revive()
     {
-        TimeManager.Instance?.AddTime(60f);
+        if (TimeManager.Instance != null)
+            TimeManager.Instance.FillToMax();
+
+        // Sin esto revives dentro del enjambre que te mató y mueres otra vez al instante.
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+        {
+            PlayerMovement movement = playerObj.GetComponent<PlayerMovement>();
+            if (movement != null) movement.TriggerHitInvulnerability();
+        }
+
         AudioManager.Instance?.FadeMusicTo(1f, 0.3f);
         ChangeState(GameState.Playing);
+
+        Debug.Log($"[GameManager] Revivido. Kills conservadas: {(EnemyManager.Instance != null ? EnemyManager.Instance.KillCount : 0)}");
     }
 
     private void ResetGameSystems()
     {
+        // Partida nueva: vuelve a contar desde cero lo ya pagado
+        cronosAwardedThisRun = 0;
+
         // Limpiar enemigos y proyectiles antes de resetear el resto
         SpawnManager.Instance?.ClearAllEnemies();
 

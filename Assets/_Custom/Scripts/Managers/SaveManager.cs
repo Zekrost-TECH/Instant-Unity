@@ -28,7 +28,9 @@ public class SaveManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            // Solo el componente: los managers comparten el GameObject "Managers" de 1_Game,
+            // y Destroy(gameObject) se llevaria por delante a todos los demas.
+            Destroy(this);
             return;
         }
 
@@ -36,6 +38,26 @@ public class SaveManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         LoadData();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    /// <summary>
+    /// Crea el SaveManager si no existe. La escena 0_MainMenu no lo lleva, así que
+    /// el menú y la tienda lo levantan por su cuenta al arrancar desde ahí.
+    /// </summary>
+    public static SaveManager Ensure()
+    {
+        if (Instance != null) return Instance;
+
+        SaveManager existing = FindAnyObjectByType<SaveManager>();
+        if (existing != null) return existing;
+
+        GameObject go = new GameObject("SaveManager");
+        return go.AddComponent<SaveManager>();
     }
 
     public void LoadData()

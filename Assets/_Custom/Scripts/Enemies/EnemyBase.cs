@@ -26,7 +26,11 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     protected Transform playerTransform;
     protected EnemyVisualFeedback visualFeedback;
 
+    private Collider2D ownCollider;
+    private bool released;
+
     private static Transform cachedPlayerTransform;
+    private static PlayerCombat cachedPlayerCombat;
 
     // ── Lifecycle ────────────────────────────────────────────────────────────
 
@@ -35,6 +39,14 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = 0f;
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+
+        // Los colliders de enemigo son triggers: nunca reciben respuesta de colisión,
+        // así que el solver dinámico es trabajo puro desperdiciado. En Kinematic se
+        // mueven igual por linearVelocity pero salen del solver.
+        rb.bodyType = RigidbodyType2D.Kinematic;
+        rb.sleepMode = RigidbodySleepMode2D.NeverSleep;
+
+        ownCollider = GetComponent<Collider2D>();
 
         visualFeedback = GetComponent<EnemyVisualFeedback>();
         if (visualFeedback == null)
@@ -48,6 +60,7 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     protected virtual void OnEnable()
     {
         currentHealth = maxHealth;
+        released = false;
 
         if (visualFeedback != null)
         {
@@ -59,7 +72,11 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
         if (cachedPlayerTransform == null)
         {
             GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-            if (playerObj != null) cachedPlayerTransform = playerObj.transform;
+            if (playerObj != null)
+            {
+                cachedPlayerTransform = playerObj.transform;
+                cachedPlayerCombat = playerObj.GetComponent<PlayerCombat>();
+            }
         }
         playerTransform = cachedPlayerTransform;
 
@@ -75,15 +92,65 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
             EnemyManager.Instance.UnregisterEnemy(this);
     }
 
-    protected virtual void FixedUpdate()
-    {
-        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
-        {
-            rb.linearVelocity = Vector2.zero;
-            return;
-        }
+    // ── Tick centralizado ────────────────────────────────────────────────────
+    // No hay Update/FixedUpdate por enemigo: con 60+ en pantalla, el coste de que
+    // Unity despache N callbacks managed supera al del propio movimiento.
+    // EnemyManager recorre la lista de activos y llama a estos métodos.
 
-        UpdateMovement();
+    public void Tick(float deltaTime)
+    {
+        if (released) return;
+        UpdateMovement(deltaTime);
+    }
+
+    public void TickVisuals(float deltaTime)
+    {
+        if (visualFeedback != null) visualFeedback.Tick(deltaTime);
+    }
+
+    public void Halt()
+    {
+        if (rb != null) rb.linearVelocity = Vector2.zero;
+    }
+
+    /// <summary>
+    /// Coloca al enemigo al salir del pool. Hay que mover el Rigidbody2D, no sólo el
+    /// Transform: el proyecto tiene Auto Sync Transforms desactivado, así que escribir
+    /// transform.position deja el cuerpo físico en su posición anterior y el siguiente
+    /// paso de física devuelve al enemigo allí.
+    /// </summary>
+    public void PlaceAt(Vector3 position)
+    {
+        transform.position = position;
+
+        if (rb == null) return;
+        rb.position = position;
+        rb.linearVelocity = Vector2.zero;
+    }
+
+    /// <summary>Devuelve el enemigo al pool sin recompensa, sonido ni conteo de baja.</summary>
+    public void Recycle()
+    {
+        if (released) return;
+        released = true;
+
+        if (EnemyManager.Instance != null)
+            EnemyManager.Instance.UnregisterEnemy(this);
+
+        if (SpawnManager.Instance != null)
+            SpawnManager.Instance.ReleaseEnemy(this);
+        else
+            gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// Orienta el enemigo hacia una dirección. Escribir transform.up fuerza una
+    /// sincronización Transform→Rigidbody en cada paso; SetRotation se queda en física.
+    /// </summary>
+    protected void FaceDirection(Vector2 direction)
+    {
+        if (direction.sqrMagnitude < 0.000001f) return;
+        rb.SetRotation(Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90f);
     }
 
     // ── Interfaz pública ─────────────────────────────────────────────────────
@@ -93,19 +160,17 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     /// </summary>
     public virtual void OnHit(int damageAmount)
     {
+        if (released) return;
+
         currentHealth -= damageAmount;
 
         if (damageFeedback != null) damageFeedback.PlayFeedbacks();
-        visualFeedback?.TriggerHitFlash();
+        if (visualFeedback != null) visualFeedback.TriggerHitFlash();
 
-        if (playerTransform != null)
+        if (playerTransform != null && ownCollider != null && HitVFXManager.Instance != null)
         {
-            Collider2D hitCollider = GetComponent<Collider2D>();
-            if (hitCollider != null)
-            {
-                Vector3 hitPoint = hitCollider.ClosestPoint(playerTransform.position);
-                HitVFXManager.Instance?.SpawnBeam(playerTransform, hitPoint);
-            }
+            Vector3 hitPoint = ownCollider.ClosestPoint(playerTransform.position);
+            HitVFXManager.Instance.SpawnBeam(playerTransform, hitPoint);
         }
 
         if (currentHealth <= 0)
@@ -118,20 +183,27 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
 
     /// <summary>
     /// Cada tipo de enemigo define aquí su lógica de movimiento.
-    /// Se llama desde FixedUpdate mientras el juego está en Playing.
+    /// Se llama desde EnemyManager.FixedUpdate mientras el juego está en Playing.
     /// </summary>
-    protected abstract void UpdateMovement();
+    protected abstract void UpdateMovement(float deltaTime);
 
     // ── Muerte ───────────────────────────────────────────────────────────────
 
     protected virtual void Die(bool giveReward = true, bool isKill = true)
     {
+        // Guardia contra doble muerte: el pool usa collectionCheck:false, así que un
+        // segundo Release duplicaría la instancia dentro del pool.
+        if (released) return;
+        released = true;
+
+        Vector3 deathPosition = transform.position;
+
         // 1. Suma tiempo al jugador
         if (giveReward && TimeManager.Instance != null)
         {
             TimeManager.Instance.AddTime(timeRewardOnDeath);
-            AudioManager.Instance?.PlayTimeGainSFX();
-            ParticleManager.Instance?.SpawnTimeGainParticles(transform.position);
+            if (AudioManager.Instance != null) AudioManager.Instance.PlayTimeGainSFX();
+            if (ParticleManager.Instance != null) ParticleManager.Instance.SpawnTimeGainParticles(deathPosition);
         }
 
         // 2. Notifica al EnemyManager
@@ -144,14 +216,20 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
         }
 
         // 3. Feedback visual y háptico
-        ParticleManager.Instance?.SpawnDeathParticles(transform.position, baseColor, deathParticleCount);
-        AudioManager.Instance?.PlaySFX(AudioManager.Instance?.enemyDeathSFX, isElite ? 1f : 0.8f);
-        if (isElite)
-            HapticManager.Instance?.TriggerEliteKill();
+        if (ParticleManager.Instance != null)
+            ParticleManager.Instance.SpawnDeathParticles(deathPosition, baseColor, deathParticleCount);
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(AudioManager.Instance.enemyDeathSFX, isElite ? 1f : 0.8f);
+
+        if (isElite && HapticManager.Instance != null)
+            HapticManager.Instance.TriggerEliteKill();
 
         // 4. Devuelve el objeto al pool — NUNCA se llama a Destroy()
         if (SpawnManager.Instance != null)
             SpawnManager.Instance.ReleaseEnemy(this);
+        else
+            gameObject.SetActive(false);
     }
 
     protected virtual void OnTriggerEnter2D(Collider2D other)
@@ -166,19 +244,25 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
 
     private void HandlePlayerContact(Collider2D other)
     {
-        if (!other.CompareTag("Player")) return;
+        if (released || !other.CompareTag("Player")) return;
 
-        PlayerCombat playerCombat = other.GetComponent<PlayerCombat>();
-        if (playerCombat != null)
+        // OnTriggerStay2D dispara cada paso de física por cada enemigo en contacto:
+        // resolvemos el PlayerCombat una sola vez y lo reutilizamos.
+        PlayerCombat playerCombat = cachedPlayerCombat;
+        if (playerCombat == null)
         {
-            // Registramos si logramos hacer daño real al jugador (retorna falso si es invulnerable)
-            bool damageDealt = playerCombat.TakeDamageFromEnemy(timeDamageToPlayer);
+            playerCombat = other.GetComponent<PlayerCombat>();
+            cachedPlayerCombat = playerCombat;
+        }
+        if (playerCombat == null) return;
 
-            if (dieOnContactWithPlayer && damageDealt)
-            {
-                // Si muere por chocar al jugador e infligir daño, no le da tiempo al jugador ni cuenta como baja
-                Die(giveReward: false, isKill: false);
-            }
+        // Registramos si logramos hacer daño real al jugador (retorna falso si es invulnerable)
+        bool damageDealt = playerCombat.TakeDamageFromEnemy(timeDamageToPlayer);
+
+        if (dieOnContactWithPlayer && damageDealt)
+        {
+            // Si muere por chocar al jugador e infligir daño, no le da tiempo al jugador ni cuenta como baja
+            Die(giveReward: false, isKill: false);
         }
     }
 }
