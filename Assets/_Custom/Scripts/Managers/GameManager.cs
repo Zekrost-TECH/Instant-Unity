@@ -33,6 +33,8 @@ public class GameManager : MonoBehaviour
         CurrentState = GameState.Menu;
         Time.timeScale = 1f;
 
+        ApplyMobilePerformanceSettings();
+
         SceneManager.sceneLoaded += HandleSceneLoaded;
     }
 
@@ -40,6 +42,19 @@ public class GameManager : MonoBehaviour
     {
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         if (Instance == this) Instance = null;
+    }
+
+    /// <summary>
+    /// En móvil Unity limita a 30 fps por defecto. Para un survivor de reflejos como este
+    /// hay que pedir 60 explícitamente, y con vSync activo targetFrameRate se ignora.
+    /// </summary>
+    private void ApplyMobilePerformanceSettings()
+    {
+#if UNITY_ANDROID || UNITY_IOS
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60;
+        Screen.sleepTimeout = SleepTimeout.NeverSleep;
+#endif
     }
 
     private void Start()

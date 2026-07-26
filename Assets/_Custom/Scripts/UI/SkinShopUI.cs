@@ -155,7 +155,7 @@ public class SkinShopUI : MonoBehaviour
 
         if (!alreadyOwned && !manager.CanAfford(skin.id))
         {
-            ShowMessage("Cronos insuficientes");
+            ShowMessage("Not enough Cronos");
             if (AudioManager.Instance != null)
                 AudioManager.Instance.PlaySFX(AudioManager.Instance.upgradeMissedSFX, 0.8f);
             return;
@@ -163,11 +163,11 @@ public class SkinShopUI : MonoBehaviour
 
         if (!manager.PurchaseOrEquip(skin.id))
         {
-            ShowMessage("No se pudo equipar");
+            ShowMessage("Could not equip");
             return;
         }
 
-        ShowMessage(alreadyOwned ? $"{skin.displayName} equipada" : $"¡{skin.displayName} desbloqueada!");
+        ShowMessage(alreadyOwned ? $"{skin.displayName} equipped" : $"{skin.displayName} unlocked!");
 
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(AudioManager.Instance.upgradeSelectSFX, 0.9f);

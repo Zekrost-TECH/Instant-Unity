@@ -14,8 +14,8 @@ public class TooltipController : MonoBehaviour
     public RectTransform dashButtonTarget;
 
     [Header("Tooltip Data")]
-    public string tooltip1Text = "TU VIDA";
-    public string tooltip2Text = "MÁTALOS PARA GANAR TIEMPO";
+    public string tooltip1Text = "YOUR LIFE";
+    public string tooltip2Text = "KILL THEM TO GAIN TIME";
     public string tooltip3Text = "DASH — INVULNERABLE";
     public float tooltipDuration = 2f;
 

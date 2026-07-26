@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 1_Paso Ligero
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
   id: moveSpeed_1
-  title: "Paso Ligero\t"
-  description: "Te mueves un poco m\xE1s r\xE1pido por el escenario.\t"
+  title: Light Step
+  description: You move a little faster across the arena.
   icon: {fileID: 21300000, guid: bad6c0f0bf6c3aa4690d400a757fa284, type: 3}
   isRare: 0
   type: 1

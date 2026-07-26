@@ -51,7 +51,7 @@ public class UpgradeUIManager : MonoBehaviour
         }
 
         if (titleText != null)
-            titleText.text = "ELIGE UN UPGRADE";
+            titleText.text = "CHOOSE AN UPGRADE";
 
         if (progressBarContainer != null)
         {

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 5_Carga de Cronos
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
   id: restoreTime_1
-  title: "Carga de Cronos\t"
-  description: "Recupera tiempo de forma inmediata.\t"
+  title: Chronos Charge
+  description: Instantly restores some time.
   icon: {fileID: -3168733581550749585, guid: f7043b7291f49844b9671b3d3dedcbb5, type: 3}
   isRare: 0
   type: 5

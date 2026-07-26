@@ -76,11 +76,11 @@ public class SkinManager : MonoBehaviour
             // La primaria es blanca: el sprite se tiñe multiplicando, así que el blanco
             // deja ver el arte tal cual. El id se queda en "Cyan" porque es la clave de
             // PlayerPrefs ("EquippedSkin" y el default de SaveManager).
-            new SkinDefinition { id = "Cyan",   displayName = "Blanco",   color = Color.white,                   price = 0 },
-            new SkinDefinition { id = "Gold",   displayName = "Oro",      color = new Color(1f, 0.84f, 0f),      price = 300 },
-            new SkinDefinition { id = "Purple", displayName = "Púrpura",  color = new Color(0.65f, 0.30f, 0.95f), price = 600 },
-            new SkinDefinition { id = "Red",    displayName = "Carmesí",  color = new Color(1f, 0.28f, 0.28f),   price = 1000 },
-            new SkinDefinition { id = "Green",  displayName = "Esmeralda", color = new Color(0.20f, 0.92f, 0.45f), price = 1500 }
+            new SkinDefinition { id = "Cyan",   displayName = "White",    color = Color.white,                   price = 0 },
+            new SkinDefinition { id = "Gold",   displayName = "Gold",     color = new Color(1f, 0.84f, 0f),      price = 300 },
+            new SkinDefinition { id = "Purple", displayName = "Purple",   color = new Color(0.65f, 0.30f, 0.95f), price = 600 },
+            new SkinDefinition { id = "Red",    displayName = "Crimson",  color = new Color(1f, 0.28f, 0.28f),   price = 1000 },
+            new SkinDefinition { id = "Green",  displayName = "Emerald",  color = new Color(0.20f, 0.92f, 0.45f), price = 1500 }
         };
     }
 

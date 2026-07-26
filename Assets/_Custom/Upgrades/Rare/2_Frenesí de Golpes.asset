@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: "2_Frenes\xED de Golpes"
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
   id: attSpeed_rare
-  title: "Frenes\xED de Golpes\t"
-  description: "Ataca mucho m\xE1s r\xE1pido.\t"
+  title: Strike Frenzy
+  description: Attack much faster.
   icon: {fileID: 21300002, guid: 358b5d9f23bc9413e87c9948acc67ee1, type: 3}
   isRare: 1
   type: 2

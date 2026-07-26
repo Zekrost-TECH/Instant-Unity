@@ -59,12 +59,12 @@ public class SkinCardUI : MonoBehaviour
         {
             if (equipped)
             {
-                statusText.SetText("EQUIPADA");
+                statusText.SetText("EQUIPPED");
                 statusText.color = equippedBorder;
             }
             else if (unlocked)
             {
-                statusText.SetText("EQUIPAR");
+                statusText.SetText("EQUIP");
                 statusText.color = Color.white;
             }
             else

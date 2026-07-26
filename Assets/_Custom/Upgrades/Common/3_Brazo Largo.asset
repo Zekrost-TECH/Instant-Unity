@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 3_Brazo Largo
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
   id: attRng_1
-  title: "Brazo Largo\t"
-  description: "Aumenta el rango de detecci\xF3n de enemigos.\t"
+  title: Long Reach
+  description: Increases your enemy detection range.
   icon: {fileID: 5524590292671962877, guid: f7043b7291f49844b9671b3d3dedcbb5, type: 3}
   isRare: 0
   type: 3

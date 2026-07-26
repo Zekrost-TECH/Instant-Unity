@@ -156,6 +156,6 @@ public class SettingsUI : MonoBehaviour
             sfxValueText.SetText("{0}%", Mathf.RoundToInt(sfxSlider.value * 100f));
 
         if (vibrationValueText != null && vibrationToggle != null)
-            vibrationValueText.SetText(vibrationToggle.isOn ? "SÍ" : "NO");
+            vibrationValueText.SetText(vibrationToggle.isOn ? "ON" : "OFF");
     }
 }

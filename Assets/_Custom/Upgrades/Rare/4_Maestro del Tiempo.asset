@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 4_Maestro del Tiempo
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
   id: rdcTimeD_rare
-  title: "Maestro del Tiempo\t"
-  description: "Reduce significativamente el drenaje constante.\t"
+  title: Time Master
+  description: Significantly reduces the constant time drain.
   icon: {fileID: 21300000, guid: 6fd0b649401ca5b419a5ebf5df170c0f, type: 3}
   isRare: 1
   type: 4

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: "1_Velocidad S\xF3nica"
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
   id: moveSpeed_rare
-  title: "Velocidad S\xF3nica\t"
-  description: "Gran aumento a la velocidad de movimiento.\t"
+  title: Sonic Speed
+  description: Big boost to your movement speed.
   icon: {fileID: 21300008, guid: 358b5d9f23bc9413e87c9948acc67ee1, type: 3}
   isRare: 1
   type: 1

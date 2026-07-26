@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 2_Ataque Veloz
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
   id: attSpeed_1
-  title: "Ataque Veloz\t"
-  description: "Reduce el tiempo entre ataques autom\xE1ticos.\t"
+  title: Swift Strike
+  description: Reduces the time between automatic attacks.
   icon: {fileID: 21300000, guid: b8c0f4c828e8022498c8a5c6c0fa8ec4, type: 3}
   isRare: 0
   type: 2

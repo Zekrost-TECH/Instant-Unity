@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 0_Reflejos Afilados
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
   id: dmg_1
-  title: Reflejos Afilados
-  description: "Aumenta ligeramente el da\xF1o de ataque."
+  title: Sharp Reflexes
+  description: Slightly increases your attack damage.
   icon: {fileID: -3168733581550749585, guid: f7043b7291f49844b9671b3d3dedcbb5, type: 3}
   isRare: 0
   type: 0

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 0_Furia del Berserker
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
   id: dmg_rare
-  title: "Furia del Berserker\t"
-  description: "Aumenta masivamente tu da\xF1o base.\t"
+  title: Berserker Fury
+  description: Massively increases your base damage.
   icon: {fileID: 21300006, guid: 358b5d9f23bc9413e87c9948acc67ee1, type: 3}
   isRare: 1
   type: 0

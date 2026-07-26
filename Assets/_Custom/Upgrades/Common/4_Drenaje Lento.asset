@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 4_Drenaje Lento
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
   id: rdcTimeD_1
-  title: "Drenaje Lento\t"
-  description: "El tiempo de partida baja un poco m\xE1s despacio.\t"
+  title: Slow Drain
+  description: The clock drains a little more slowly.
   icon: {fileID: 2125737359283935466, guid: f7043b7291f49844b9671b3d3dedcbb5, type: 3}
   isRare: 0
   type: 4
