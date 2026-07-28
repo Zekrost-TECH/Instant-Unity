@@ -39,6 +39,14 @@ public class PlayerCombat : MonoBehaviour
     private void Awake()
     {
         movement = GetComponent<PlayerMovement>();
+
+        // Igual que en PlayerMovement: capturar en Awake, no en Start. El arranque de
+        // partida desde sceneLoaded llama a ResetState() antes de Start, y con los bases
+        // sin inicializar dejaba attackDamage/Rate/Range a 0 (jugador incapaz de matar).
+        baseAttackDamage = attackDamage;
+        baseAttackRate = attackRate;
+        baseAttackRange = attackRange;
+        lastRange = attackRange;
     }
 
     private void Start()
@@ -46,12 +54,9 @@ public class PlayerCombat : MonoBehaviour
         if (SaveManager.Instance != null)
         {
             attackRange *= (1f + SaveManager.Instance.AttackRangeLevel * 0.05f);
+            baseAttackRange = attackRange;   // el upgrade permanente entra en el valor de reset
         }
         lastRange = attackRange;
-
-        baseAttackDamage = attackDamage;
-        baseAttackRate = attackRate;
-        baseAttackRange = attackRange;
 
         UpdateRangeVisual();
     }

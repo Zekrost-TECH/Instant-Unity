@@ -58,6 +58,13 @@ public class PlayerMovement : MonoBehaviour
         
         rb.gravityScale = 0f;
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+
+        // Los valores base se capturan en Awake, NO en Start: al entrar desde el menú,
+        // GameManager arranca la partida desde sceneLoaded, que corre después de Awake
+        // pero ANTES de Start. Si se capturaran en Start, el ResetState() de ese arranque
+        // leería ceros y dejaría moveSpeed y dashCooldown a 0 de forma permanente.
+        baseMoveSpeed = moveSpeed;
+        baseDashCooldown = dashCooldown;
     }
 
     private void Start()
@@ -65,11 +72,10 @@ public class PlayerMovement : MonoBehaviour
         if (SaveManager.Instance != null)
         {
             dashCooldown *= (1f - SaveManager.Instance.DashCooldownLevel * 0.08f);
+            // El upgrade permanente pasa a formar parte del valor al que vuelve ResetState
+            baseDashCooldown = dashCooldown;
             ApplyEquippedSkin();
         }
-
-        baseMoveSpeed = moveSpeed;
-        baseDashCooldown = dashCooldown;
     }
 
     private void ApplyEquippedSkin()

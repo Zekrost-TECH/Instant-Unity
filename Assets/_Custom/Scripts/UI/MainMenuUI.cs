@@ -20,6 +20,9 @@ public class MainMenuUI : MonoBehaviour
     [Header("Ajustes")]
     public SettingsUI settingsUI;
 
+    [Header("Records")]
+    public RecordsUI recordsUI;
+
     [Header("Debug")]
     [Tooltip("Cronos que regala DebugAddCronos(). Sólo para probar la tienda.")]
     public int debugCronosAmount = 100;
@@ -102,6 +105,16 @@ public class MainMenuUI : MonoBehaviour
     public void CloseShop()
     {
         if (skinShop != null) skinShop.Close();
+    }
+
+    public void OpenRecords()
+    {
+        if (recordsUI != null) recordsUI.Open();
+    }
+
+    public void CloseRecords()
+    {
+        if (recordsUI != null) recordsUI.Close();
     }
 
     public void OpenSettings()
