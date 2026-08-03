@@ -7,10 +7,11 @@ public class TimeManager : MonoBehaviour
 
     public float TIME_START = 30f;
     public const float TIME_MAX = 45f;
-    public const float TIME_DRAIN = 1f;
-    public const float TIME_PENALTY = 5f;
+    public const float TIME_DRAIN = 1.25f;
+    public const float TIME_PENALTY = 6f;
 
     public float CurrentTime { get; private set; }
+    public float TimeGainedThisRun { get; private set; }
     
     private float drainMultiplier = 1.0f;
     public float PermanentDrainModifier = 1.0f;
@@ -56,7 +57,7 @@ public class TimeManager : MonoBehaviour
         float bonusTime = 0f;
         if (SaveManager.Instance != null)
         {
-            bonusTime = SaveManager.Instance.StartingTimeLevel * 4f;
+            bonusTime = SaveManager.Instance.StartingTimeLevel * 2f;
         }
         CurrentTime = Mathf.Min(TIME_START + bonusTime, TIME_MAX);
         UpdateTimeColorState();
@@ -125,8 +126,10 @@ public class TimeManager : MonoBehaviour
 
     public void AddTime(float amount)
     {
+        float previousTime = CurrentTime;
         CurrentTime += amount;
         CurrentTime = Mathf.Clamp(CurrentTime, 0f, TIME_MAX);
+        TimeGainedThisRun += Mathf.Max(0f, CurrentTime - previousTime);
         OnTimeChanged?.Invoke(CurrentTime);
         UpdateTimeColorState();
     }
@@ -161,9 +164,10 @@ public class TimeManager : MonoBehaviour
         float bonusTime = 0f;
         if (SaveManager.Instance != null)
         {
-            bonusTime = SaveManager.Instance.StartingTimeLevel * 4f;
+            bonusTime = SaveManager.Instance.StartingTimeLevel * 2f;
         }
         CurrentTime = Mathf.Min(TIME_START + bonusTime, TIME_MAX);
+        TimeGainedThisRun = 0f;
         criticalStateNotified = false;
         timeOutNotified = false;
         currentColorState = TimeColorState.Calm;

@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 #if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
 using GoogleMobileAds.Api;
+using GoogleMobileAds.Common;
 #endif
 
 public class AdsManager : MonoBehaviour
@@ -31,6 +32,7 @@ public class AdsManager : MonoBehaviour
     public float adDurationStub = 1f;
 
     public bool IsAdReady { get; private set; } = false;
+    public event Action<bool> OnAdReadyChanged;
 
     private Action onRewardGrantedCallback;
     private Action onFailedCallback;
@@ -68,14 +70,12 @@ public class AdsManager : MonoBehaviour
     {
         if (UseStub)
         {
-            IsAdReady = true;   // el stub siempre está listo
+            SetAdReady(true);   // el stub siempre está listo
             return;
         }
 
 #if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
-        // Los callbacks del SDK llegan en un hilo del plugin. Sin esto tocaríamos
-        // TimeManager/GameManager fuera del hilo principal de Unity.
-        MobileAds.RaiseAdEventsOnUnityMainThread = true;
+        MobileAdsEventExecutor.Initialize();
         MobileAds.Initialize(status =>
         {
             Debug.Log("[AdsManager] AdMob inicializado.");
@@ -174,7 +174,7 @@ public class AdsManager : MonoBehaviour
     private void LoadRewardedAd()
     {
         DestroyRewardedAd();
-        IsAdReady = false;
+        SetAdReady(false);
 
         RewardedAd.Load(RewardedAdUnitId, new AdRequest(), (ad, error) =>
         {
@@ -185,7 +185,7 @@ public class AdsManager : MonoBehaviour
             }
 
             rewardedAd = ad;
-            IsAdReady = true;
+            SetAdReady(true);
             RegisterAdEvents(ad);
         });
     }
@@ -244,5 +244,13 @@ public class AdsManager : MonoBehaviour
         onRewardGrantedCallback = null;
         onFailedCallback = null;
         rewardEarnedThisAd = false;
+    }
+
+    private void SetAdReady(bool ready)
+    {
+        if (IsAdReady == ready) return;
+
+        IsAdReady = ready;
+        OnAdReadyChanged?.Invoke(ready);
     }
 }

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 5846464551589510652}
   - component: {fileID: -149432717181563441}
   - component: {fileID: 680981770753337166}
+  - component: {fileID: 4010999200121862733}
   m_Layer: 6
   m_Name: EnemyShooter
   m_TagString: Untagged
@@ -184,12 +185,32 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyShooter
   maxHealth: 1
-  timeRewardOnDeath: 3
-  timeDamageToPlayer: 5
+  timeRewardOnDeath: 1.5
+  timeDamageToPlayer: 6
   isElite: 0
   dieOnContactWithPlayer: 0
   damageFeedback: {fileID: 0}
+  baseColor: {r: 1, g: 0, b: 0, a: 1}
+  deathParticleCount: 8
   moveSpeed: 2
   shootCooldown: 3
   stoppingDistance: 5
   retreatDistance: 3
+--- !u!114 &4010999200121862733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8540399230803058262}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a57c63177c2c5d948829d51eb4720959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyVisualFeedback
+  hitFlashDuration: 0.1
+  isEliteGlow: 0
+  glowColor: {r: 1, g: 0.67, b: 0, a: 0.33}
+  glowMinScale: 1
+  glowMaxScale: 1.15
+  glowCycleDuration: 0.8

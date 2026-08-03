@@ -23,6 +23,9 @@ public class MainMenuUI : MonoBehaviour
     [Header("Records")]
     public RecordsUI recordsUI;
 
+    [Header("Progression")]
+    public PermanentProgressionUI progressionUI;
+
     [Header("Debug")]
     [Tooltip("Cronos que regala DebugAddCronos(). Sólo para probar la tienda.")]
     public int debugCronosAmount = 100;
@@ -60,7 +63,7 @@ public class MainMenuUI : MonoBehaviour
         if (SaveManager.Instance == null) return;
 
         if (bestTimeText != null)
-            bestTimeText.SetText("{0:1}s", SaveManager.Instance.BestTime);
+            bestTimeText.SetText("{0:F1}s", SaveManager.Instance.BestTime);
 
         if (bestKillsText != null)
             bestKillsText.SetText("Record: {0}", SaveManager.Instance.BestKills);
@@ -117,6 +120,16 @@ public class MainMenuUI : MonoBehaviour
         if (recordsUI != null) recordsUI.Close();
     }
 
+    public void OpenProgression()
+    {
+        if (progressionUI != null) progressionUI.Open();
+    }
+
+    public void CloseProgression()
+    {
+        if (progressionUI != null) progressionUI.Close();
+    }
+
     public void OpenSettings()
     {
         if (settingsUI != null) settingsUI.Open();
@@ -133,6 +146,8 @@ public class MainMenuUI : MonoBehaviour
     /// </summary>
     public void DebugAddCronos()
     {
+        if (!Debug.isDebugBuild) return;
+
         SaveManager.Ensure();
         if (SaveManager.Instance == null) return;
 

@@ -12,10 +12,15 @@ public class ParticleManager : MonoBehaviour
     public GameObject dashTrailPrefab;
 
     [Header("Death Particles")]
-    public float deathSpeedMin = 3f;
-    public float deathSpeedMax = 8f;
-    public float deathGravityScale = 2.5f;
-    public float deathLifetime = 0.5f;
+    public float deathSpeedMin = 3.5f;
+    public float deathSpeedMax = 7.5f;
+    public float deathGravityScale = 0.25f;
+    public float deathLifetime = 0.4f;
+    public int maxActiveDeathParticles = 160;
+    public float deathScaleMin = 0.65f;
+    public float deathScaleMax = 1.35f;
+    public float deathSpinMin = -540f;
+    public float deathSpinMax = 540f;
 
     [Header("Time Gain Particles")]
     public float timeGainSpeedMin = 1.5f;
@@ -26,8 +31,9 @@ public class ParticleManager : MonoBehaviour
     private ObjectPool<PooledParticle> timeGainPool;
     private ObjectPool<PooledParticle> dashTrailPool;
 
-    private readonly List<ActiveParticle> active = new List<ActiveParticle>(128);
+    private readonly List<ActiveParticle> active = new List<ActiveParticle>(256);
     private Transform container;
+    private int activeDeathParticleCount;
 
     private const string DontDestroyOnLoadScene = "DontDestroyOnLoad";
 
@@ -50,6 +56,8 @@ public class ParticleManager : MonoBehaviour
         public Color baseColor;
         public float elapsed;
         public float duration;
+        public Vector3 startScale;
+        public bool shrink;
     }
 
     private void Awake()
@@ -66,9 +74,9 @@ public class ParticleManager : MonoBehaviour
         container = new GameObject("ParticlePool").transform;
         container.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
 
-        deathPool = CreatePool(deathParticlePrefab, 30);
-        timeGainPool = CreatePool(timeGainParticlePrefab, 20);
-        dashTrailPool = CreatePool(dashTrailPrefab, 10);
+        deathPool = CreatePool(deathParticlePrefab, 60);
+        timeGainPool = CreatePool(timeGainParticlePrefab, 40);
+        dashTrailPool = CreatePool(dashTrailPrefab, 20);
     }
 
     private void Start()
@@ -86,6 +94,7 @@ public class ParticleManager : MonoBehaviour
         if (Instance != this) return;
 
         active.Clear();
+        activeDeathParticleCount = 0;
         deathPool?.Clear();
         timeGainPool?.Clear();
         dashTrailPool?.Clear();
@@ -110,7 +119,15 @@ public class ParticleManager : MonoBehaviour
                 };
             },
             actionOnGet: p => p.go.SetActive(true),
-            actionOnRelease: p => { if (p.go != null) p.go.SetActive(false); },
+            actionOnRelease: p =>
+            {
+                if (p.rb != null)
+                {
+                    p.rb.linearVelocity = Vector2.zero;
+                    p.rb.angularVelocity = 0f;
+                }
+                if (p.go != null) p.go.SetActive(false);
+            },
             actionOnDestroy: p => { if (p.go != null) Destroy(p.go); },
             collectionCheck: false,
             defaultCapacity: capacity,
@@ -128,6 +145,8 @@ public class ParticleManager : MonoBehaviour
             PooledParticle p = entry.particle;
             if (p.go == null)
             {
+                if (entry.pool == deathPool)
+                    activeDeathParticleCount = Mathf.Max(0, activeDeathParticleCount - 1);
                 active.RemoveAt(i);
                 continue;
             }
@@ -136,8 +155,14 @@ public class ParticleManager : MonoBehaviour
             if (p.sr != null)
             {
                 Color c = entry.baseColor;
-                c.a = Mathf.Lerp(entry.baseColor.a, 0f, t);
+                c.a = Mathf.Lerp(entry.baseColor.a, 0f, t * t);
                 p.sr.color = c;
+            }
+
+            if (entry.shrink)
+            {
+                float scaleT = Mathf.SmoothStep(0f, 1f, t);
+                p.tr.localScale = Vector3.Lerp(entry.startScale, Vector3.zero, scaleT);
             }
 
             if (t < 1f)
@@ -147,6 +172,8 @@ public class ParticleManager : MonoBehaviour
             }
 
             active.RemoveAt(i);
+            if (entry.pool == deathPool)
+                activeDeathParticleCount = Mathf.Max(0, activeDeathParticleCount - 1);
             entry.pool.Release(p);
         }
     }
@@ -155,21 +182,32 @@ public class ParticleManager : MonoBehaviour
     {
         if (deathPool == null) return;
 
-        for (int i = 0; i < count; i++)
+        int available = Mathf.Max(0, maxActiveDeathParticles - activeDeathParticleCount);
+        int particlesToSpawn = Mathf.Min(count, available);
+
+        for (int i = 0; i < particlesToSpawn; i++)
         {
             PooledParticle p = deathPool.Get();
             p.tr.position = position;
+            p.tr.rotation = Quaternion.Euler(0f, 0f, Random.Range(0f, 360f));
+            float scale = Random.Range(deathScaleMin, deathScaleMax);
+            p.tr.localScale = Vector3.one * scale;
 
             if (p.sr != null) p.sr.color = color;
 
             if (p.rb != null)
             {
+                p.rb.position = position;
+                p.rb.SetRotation(p.tr.eulerAngles.z);
                 Vector2 dir = Random.insideUnitCircle.normalized;
+                if (dir.sqrMagnitude < 0.001f) dir = Vector2.up;
                 p.rb.linearVelocity = dir * Random.Range(deathSpeedMin, deathSpeedMax);
                 p.rb.gravityScale = deathGravityScale;
+                p.rb.angularVelocity = Random.Range(deathSpinMin, deathSpinMax);
             }
 
-            Track(p, deathPool, color, deathLifetime);
+            Track(p, deathPool, color, deathLifetime, true);
+            activeDeathParticleCount++;
         }
     }
 
@@ -186,6 +224,8 @@ public class ParticleManager : MonoBehaviour
 
             if (p.rb != null)
             {
+                p.rb.position = position;
+                p.rb.SetRotation(0f);
                 p.rb.linearVelocity = Vector2.up * Random.Range(timeGainSpeedMin, timeGainSpeedMax);
                 p.rb.gravityScale = 0f;
             }
@@ -202,13 +242,19 @@ public class ParticleManager : MonoBehaviour
         p.tr.position = position;
         if (direction != Vector2.zero) p.tr.up = direction;
 
+        if (p.rb != null)
+        {
+            p.rb.position = position;
+            p.rb.SetRotation(p.tr.eulerAngles.z);
+        }
+
         if (p.sr != null) p.sr.color = DashTrailColor;
 
         Track(p, dashTrailPool, DashTrailColor, duration);
         return p.go;
     }
 
-    private void Track(PooledParticle particle, ObjectPool<PooledParticle> pool, Color baseColor, float duration)
+    private void Track(PooledParticle particle, ObjectPool<PooledParticle> pool, Color baseColor, float duration, bool shrink = false)
     {
         active.Add(new ActiveParticle
         {
@@ -216,7 +262,9 @@ public class ParticleManager : MonoBehaviour
             pool = pool,
             baseColor = baseColor,
             elapsed = 0f,
-            duration = Mathf.Max(0.001f, duration)
+            duration = Mathf.Max(0.001f, duration),
+            startScale = particle.tr.localScale,
+            shrink = shrink
         });
     }
 }

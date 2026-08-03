@@ -14,7 +14,7 @@ public class GameManager : MonoBehaviour
     public string mainMenuSceneName = "0_MainMenu";
 
     public event Action<GameState> OnGameStateChanged;
-    public event Action<float, int, int, bool> OnGameOver; // time, kills, cronos, newRecord
+    public event Action<float, int, int, bool> OnGameOver; // time, kills, payout, newRecord
     public event Action OnGameRestarted;
 
     private int cronosAwardedThisRun = 0;
@@ -32,6 +32,8 @@ public class GameManager : MonoBehaviour
         Instance = this;
         CurrentState = GameState.Menu;
         Time.timeScale = 1f;
+
+        SaveManager.Ensure();
 
         ApplyMobilePerformanceSettings();
 
@@ -68,9 +70,8 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// El GameManager sobrevive a los cambios de escena (DontDestroyOnLoad), así que su
-    /// Start sólo corre una vez. Sin esto, al volver al juego desde el menú seguía en
-    /// GameOver y todo quedaba congelado en el último frame de la partida anterior.
+    /// El GameManager es local a la escena de juego, así que cada entrada crea un estado
+    /// limpio y suscribe de nuevo el flujo de escena.
     /// </summary>
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
@@ -80,8 +81,7 @@ public class GameManager : MonoBehaviour
         }
         else if (scene.name == mainMenuSceneName)
         {
-            // Los enemigos viven en un pool DontDestroyOnLoad: sin limpiarlos siguen
-            // registrados y reaparecen en la siguiente partida.
+            // Limpieza defensiva si el menú se carga desde una partida todavía activa.
             SpawnManager.Instance?.ClearAllEnemies();
             ChangeState(GameState.Menu);
         }
@@ -102,6 +102,7 @@ public class GameManager : MonoBehaviour
         // lee todavía el reloj a 0 y las kills de la partida anterior.
         ResetGameSystems();
         ChangeState(GameState.Playing);
+        AudioManager.Instance?.PlayMainMusic();
     }
 
     public void PauseGame()
@@ -146,7 +147,7 @@ public class GameManager : MonoBehaviour
 
             Debug.Log($"Resultados de la partida: +{cronosGained} Cronos ganados. Record Time: {SaveManager.Instance.BestTime:F1}s, Record Kills: {SaveManager.Instance.BestKills}");
 
-            OnGameOver?.Invoke(finalTime, finalKills, cronosGained, newRecord);
+            OnGameOver?.Invoke(finalTime, finalKills, payout, newRecord);
         }
     }
 
@@ -155,6 +156,7 @@ public class GameManager : MonoBehaviour
         ResetGameSystems();
         ChangeState(GameState.Playing);
         AudioManager.Instance?.FadeMusicTo(1f, 0.3f);
+        AudioManager.Instance?.PlayMainMusic();
         OnGameRestarted?.Invoke();
     }
 
@@ -176,6 +178,7 @@ public class GameManager : MonoBehaviour
         }
 
         AudioManager.Instance?.FadeMusicTo(1f, 0.3f);
+        AudioManager.Instance?.PlayMainMusic();
         ChangeState(GameState.Playing);
 
         Debug.Log($"[GameManager] Revivido. Kills conservadas: {(EnemyManager.Instance != null ? EnemyManager.Instance.KillCount : 0)}");

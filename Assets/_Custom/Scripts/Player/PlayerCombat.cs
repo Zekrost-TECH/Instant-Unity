@@ -8,11 +8,12 @@ public class PlayerCombat : MonoBehaviour
     [Tooltip("Daño que aplica el ataque automático al enemigo más cercano.")]
     public int attackDamage = 1;
     [Tooltip("Tiempo en segundos entre cada ataque automático.")]
-    public float attackRate = 0.6f;
+    public float attackRate = 0.75f;
     [Tooltip("Radio máximo en el que el jugador detecta enemigos.")]
     public float attackRange = 3f;
     [Tooltip("Penalización de tiempo al recibir daño de un enemigo (cuerpo a cuerpo).")]
-    public float hitTimePenalty = 5f;
+    public float hitTimePenalty = 6f;
+    public int DamageTakenCount { get; private set; }
 
     [Header("Game Feel (FEEL Asset)")]
     [Tooltip("Feedback al asestar un golpe a un enemigo (Hit-stop, partículas, sonido).")]
@@ -53,7 +54,7 @@ public class PlayerCombat : MonoBehaviour
     {
         if (SaveManager.Instance != null)
         {
-            attackRange *= (1f + SaveManager.Instance.AttackRangeLevel * 0.05f);
+            attackRange *= (1f + SaveManager.Instance.AttackRangeLevel * 0.07f);
             baseAttackRange = attackRange;   // el upgrade permanente entra en el valor de reset
         }
         lastRange = attackRange;
@@ -132,6 +133,7 @@ public class PlayerCombat : MonoBehaviour
 
         float damageToApply = customDamage > 0f ? customDamage : hitTimePenalty;
         if (TimeManager.Instance != null) TimeManager.Instance.SubtractTime(damageToApply);
+        DamageTakenCount++;
         movement.TriggerHitInvulnerability();
 
         // Jugar GameFeel: Screen Shake, impacto visual fuerte
@@ -148,6 +150,7 @@ public class PlayerCombat : MonoBehaviour
         attackDamage = baseAttackDamage;
         attackRate = baseAttackRate;
         attackRange = baseAttackRange;
+        DamageTakenCount = 0;
         lastRange = attackRange;
         attackTimer = 0f;
         UpdateRangeVisual();

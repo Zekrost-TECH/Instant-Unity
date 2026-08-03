@@ -7,6 +7,7 @@ public class UpgradeManager : MonoBehaviour
     public static UpgradeManager Instance { get; private set; }
 
     public const float UPGRADE_DRAIN_MULTIPLIER = 0.2f;
+    public const float UPGRADE_WINDOW_DURATION = 8f;
 
     [Header("Pools")]
     public List<UpgradeData> commonUpgrades;
@@ -15,13 +16,18 @@ public class UpgradeManager : MonoBehaviour
     private List<string> acquiredUpgrades = new List<string>();
     private int totalKills = 0;
     private bool isWindowOpen = false;
+    private float upgradeTimer;
+    private bool pendingCommonUpgrade;
+    private bool pendingRareUpgrade;
 
     private readonly List<UpgradeData> selectedBuffer = new List<UpgradeData>(4);
     private readonly List<UpgradeData> commonPoolBuffer = new List<UpgradeData>(16);
     private readonly List<UpgradeData> rarePoolBuffer = new List<UpgradeData>(16);
+    private readonly List<UpgradeData> currentOptions = new List<UpgradeData>(4);
 
     public event Action<List<UpgradeData>> OnUpgradeWindowOpened;
     public event Action OnUpgradeWindowClosed;
+    public event Action<float> OnUpgradeTimerChanged;
 
     private void Awake()
     {
@@ -79,18 +85,41 @@ public class UpgradeManager : MonoBehaviour
     {
         totalKills++;
 
-        if (isElite && !isWindowOpen)
+        if (!isElite) return;
+
+        if (isWindowOpen)
         {
-            TriggerRareUpgrade();
+            pendingRareUpgrade = true;
+            return;
         }
+
+        TriggerRareUpgrade();
     }
 
     private void HandleKillsThreshold()
     {
-        if (!isWindowOpen)
+        if (isWindowOpen)
         {
-            TriggerCommonUpgrade();
+            pendingCommonUpgrade = true;
+            return;
         }
+
+        TriggerCommonUpgrade();
+    }
+
+    private void Update()
+    {
+        if (!isWindowOpen) return;
+
+        upgradeTimer -= Time.unscaledDeltaTime;
+        OnUpgradeTimerChanged?.Invoke(Mathf.Clamp01(upgradeTimer / UPGRADE_WINDOW_DURATION));
+
+        if (upgradeTimer > 0f) return;
+
+        if (currentOptions.Count > 0)
+            ApplyUpgrade(currentOptions[0]);
+        else
+            CloseUpgradeWindow();
     }
 
     public void TriggerCommonUpgrade()
@@ -109,12 +138,16 @@ public class UpgradeManager : MonoBehaviour
         if (isWindowOpen) return;
 
         isWindowOpen = true;
+        upgradeTimer = UPGRADE_WINDOW_DURATION;
+        currentOptions.Clear();
+        currentOptions.AddRange(options);
         GameManager.Instance?.ChangeState(GameManager.GameState.Upgrade);
 
         // Pausa parcial: el reloj drena al 20% de velocidad
         TimeManager.Instance?.SetDrainMultiplier(UPGRADE_DRAIN_MULTIPLIER);
         AudioManager.Instance?.FadeMusicTo(0.3f, 0.3f);
 
+        OnUpgradeTimerChanged?.Invoke(1f);
         OnUpgradeWindowOpened?.Invoke(options);
     }
 
@@ -131,10 +164,13 @@ public class UpgradeManager : MonoBehaviour
     {
         if (isWindowOpen)
         {
-            CloseUpgradeWindow();
+            CloseUpgradeWindow(resumeGame: false);
         }
         acquiredUpgrades.Clear();
         totalKills = 0;
+        pendingCommonUpgrade = false;
+        pendingRareUpgrade = false;
+        currentOptions.Clear();
     }
 
     private void CloseUpgradeWindow(bool resumeGame = true)
@@ -142,12 +178,29 @@ public class UpgradeManager : MonoBehaviour
         if (!isWindowOpen) return;
 
         isWindowOpen = false;
+        upgradeTimer = 0f;
 
         TimeManager.Instance?.SetDrainMultiplier(1f);
         AudioManager.Instance?.FadeMusicTo(1f, 0.3f);
 
         if (resumeGame) GameManager.Instance?.ResumeGame();
         OnUpgradeWindowClosed?.Invoke();
+        OnUpgradeTimerChanged?.Invoke(0f);
+        currentOptions.Clear();
+
+        if (resumeGame)
+        {
+            if (pendingRareUpgrade)
+            {
+                pendingRareUpgrade = false;
+                TriggerRareUpgrade();
+            }
+            else if (pendingCommonUpgrade)
+            {
+                pendingCommonUpgrade = false;
+                TriggerCommonUpgrade();
+            }
+        }
     }
 
     private List<UpgradeData> GetRandomUpgrades(int count, bool rare)

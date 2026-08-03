@@ -50,6 +50,7 @@ public class BootstrapInitializer : MonoBehaviour
 
     private void EnsureManager(ref GameObject prefab, string managerName)
     {
+        if (HasManagerComponent(managerName)) return;
         if (GameObject.Find(managerName) != null) return;
 
         GameObject managerObj;
@@ -65,6 +66,27 @@ public class BootstrapInitializer : MonoBehaviour
 
         managerObj.name = managerName;
         DontDestroyOnLoad(managerObj);
+    }
+
+    private bool HasManagerComponent(string managerName)
+    {
+        switch (managerName)
+        {
+            case "GameManager": return FindAnyObjectByType<GameManager>() != null;
+            case "TimeManager": return FindAnyObjectByType<TimeManager>() != null;
+            case "SpawnManager": return FindAnyObjectByType<SpawnManager>() != null;
+            case "EnemyManager": return FindAnyObjectByType<EnemyManager>() != null;
+            case "UpgradeManager": return FindAnyObjectByType<UpgradeManager>() != null;
+            case "AudioManager": return FindAnyObjectByType<AudioManager>() != null;
+            case "UIManager": return FindAnyObjectByType<UIManager>() != null;
+            case "SaveManager": return FindAnyObjectByType<SaveManager>() != null;
+            case "SkinManager": return FindAnyObjectByType<SkinManager>() != null;
+            case "AdsManager": return FindAnyObjectByType<AdsManager>() != null;
+            case "HapticManager": return FindAnyObjectByType<HapticManager>() != null;
+            case "ParticleManager": return FindAnyObjectByType<ParticleManager>() != null;
+            case "HitVFXManager": return FindAnyObjectByType<HitVFXManager>() != null;
+            default: return false;
+        }
     }
 
     private void AddManagerComponent(GameObject obj, string managerName)

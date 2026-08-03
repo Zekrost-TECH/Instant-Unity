@@ -8,9 +8,9 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     [Tooltip("Vida máxima del enemigo.")]
     public int maxHealth = 2;
     [Tooltip("Tiempo (segundos) que se le suma al jugador al morir.")]
-    public float timeRewardOnDeath = 0.5f;
+    public float timeRewardOnDeath = 0.75f;
     [Tooltip("Tiempo (segundos) que se le resta al jugador al tocarlo.")]
-    public float timeDamageToPlayer = 5f;
+    public float timeDamageToPlayer = 6f;
     [Tooltip("Si es true, este enemigo cuenta como élite al morir.")]
     public bool isElite = false;
     [Tooltip("Si es true, este enemigo morirá instantáneamente al tocar al jugador (tipo kamikaze).")]
@@ -19,7 +19,7 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     [Header("Game Feel")]
     public MMF_Player damageFeedback;
     public Color baseColor = Color.red;
-    public int deathParticleCount = 12;
+    public int deathParticleCount = 8;
 
     protected int currentHealth;
     protected Rigidbody2D rb;
@@ -197,6 +197,7 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
         released = true;
 
         Vector3 deathPosition = transform.position;
+        Color deathColor = visualFeedback != null ? visualFeedback.BaseColor : baseColor;
 
         // 1. Suma tiempo al jugador
         if (giveReward && TimeManager.Instance != null)
@@ -217,10 +218,10 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
 
         // 3. Feedback visual y háptico
         if (ParticleManager.Instance != null)
-            ParticleManager.Instance.SpawnDeathParticles(deathPosition, baseColor, deathParticleCount);
+            ParticleManager.Instance.SpawnDeathParticles(deathPosition, deathColor, deathParticleCount);
 
         if (AudioManager.Instance != null)
-            AudioManager.Instance.PlaySFX(AudioManager.Instance.enemyDeathSFX, isElite ? 1f : 0.8f);
+            AudioManager.Instance.PlayEnemyDeathSFX(isElite);
 
         if (isElite && HapticManager.Instance != null)
             HapticManager.Instance.TriggerEliteKill();

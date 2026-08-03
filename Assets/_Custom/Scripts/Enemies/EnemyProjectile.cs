@@ -5,7 +5,7 @@ public class EnemyProjectile : MonoBehaviour
 {
     [Header("Projectile Settings")]
     public float speed = 10f;
-    public float timeDamageToPlayer = 5f;
+    public float timeDamageToPlayer = 6f;
     public float lifetime = 4f;
 
     private Rigidbody2D rb;

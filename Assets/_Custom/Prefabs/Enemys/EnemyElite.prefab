@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 5846464551589510652}
   - component: {fileID: -149432717181563441}
   - component: {fileID: 3159279295086998678}
+  - component: {fileID: 8200461252265944152}
   m_Layer: 6
   m_Name: EnemyElite
   m_TagString: Untagged
@@ -184,8 +185,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyElite
   maxHealth: 30
-  timeRewardOnDeath: 10
-  timeDamageToPlayer: 5
+  timeRewardOnDeath: 8
+  timeDamageToPlayer: 6
   isElite: 1
   dieOnContactWithPlayer: 0
   damageFeedback: {fileID: 0}
@@ -194,7 +195,7 @@ MonoBehaviour:
   moveSpeed: 2.5
   preferredDistance: 6.5
   distanceTolerance: 1.2
-  laserDamage: 20
+  laserDamage: 12
   laserCooldown: 5
   firstShotDelay: 2.5
   telegraphDuration: 1.2
@@ -211,3 +212,21 @@ MonoBehaviour:
   lockedWidth: 0.14
   laserSortingLayer: Default
   laserSortingOrder: 90
+--- !u!114 &8200461252265944152
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8540399230803058262}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a57c63177c2c5d948829d51eb4720959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyVisualFeedback
+  hitFlashDuration: 0.1
+  isEliteGlow: 0
+  glowColor: {r: 1, g: 0.67, b: 0, a: 0.33}
+  glowMinScale: 1
+  glowMaxScale: 1.15
+  glowCycleDuration: 0.8

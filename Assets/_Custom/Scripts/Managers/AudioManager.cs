@@ -20,6 +20,10 @@ public class AudioManager : MonoBehaviour
     public AudioClip timeGainSFX;
     public AudioClip clockBeepSFX;
 
+    [Header("Death Feel")]
+    [Range(0f, 1f)] public float enemyDeathVolume = 0.45f;
+    [Range(0f, 1f)] public float eliteDeathVolume = 0.75f;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -46,10 +50,7 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Crea el AudioManager si no existe. No está puesto en ninguna escena, así que sin
-    /// esto los ajustes de volumen no tendrían a quién aplicarse.
-    /// </summary>
+    /// <summary>Crea un AudioManager local si la escena todavía no tiene uno.</summary>
     public static AudioManager Ensure()
     {
         if (Instance != null) return Instance;
@@ -59,7 +60,6 @@ public class AudioManager : MonoBehaviour
 
         GameObject go = new GameObject("AudioManager");
         AudioManager manager = go.AddComponent<AudioManager>();
-        DontDestroyOnLoad(go);
         return manager;
     }
 
@@ -78,6 +78,7 @@ public class AudioManager : MonoBehaviour
         if (TimeManager.Instance != null)
         {
             TimeManager.Instance.OnTimeCritical += HandleTimeCritical;
+            TimeManager.Instance.OnTimeCriticalEnded += HandleTimeCriticalEnded;
         }
         
         PlayMusic(mainMusic);
@@ -100,6 +101,7 @@ public class AudioManager : MonoBehaviour
         if (TimeManager.Instance != null)
         {
             TimeManager.Instance.OnTimeCritical -= HandleTimeCritical;
+            TimeManager.Instance.OnTimeCriticalEnded -= HandleTimeCriticalEnded;
         }
 
         if (Instance == this) Instance = null;
@@ -129,6 +131,13 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+    public void PlayEnemyDeathSFX(bool isElite)
+    {
+        float baseVolume = isElite ? eliteDeathVolume : enemyDeathVolume;
+        float volume = baseVolume * Random.Range(0.9f, 1.05f);
+        PlaySFX(enemyDeathSFX, volume);
+    }
+
     public void PlayMusic(AudioClip clip)
     {
         if (musicSource != null && clip != null)
@@ -136,6 +145,12 @@ public class AudioManager : MonoBehaviour
             musicSource.clip = clip;
             musicSource.Play();
         }
+    }
+
+    public void PlayMainMusic()
+    {
+        if (mainMusic != null && (musicSource == null || musicSource.clip != mainMusic))
+            PlayMusic(mainMusic);
     }
 
     public void StopMusic()
@@ -152,6 +167,11 @@ public class AudioManager : MonoBehaviour
         {
             PlayMusic(tensionMusic);
         }
+    }
+
+    private void HandleTimeCriticalEnded()
+    {
+        PlayMainMusic();
     }
 
     public void FadeMusicTo(float targetVolume, float duration)

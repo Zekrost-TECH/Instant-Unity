@@ -35,13 +35,9 @@ public class HitVFXManager : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
 
-        // Los beams instanciados viven bajo un contenedor persistente. Sin esto se
-        // destruyen al cambiar de escena y el pool devuelve referencias muertas.
         beamContainer = new GameObject("HitBeamPool").transform;
         beamContainer.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-        DontDestroyOnLoad(beamContainer.gameObject);
 
         pool = new ObjectPool<HitBeam>(
             createFunc: CreateBeam,

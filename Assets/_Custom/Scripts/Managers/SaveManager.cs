@@ -8,7 +8,6 @@ public class SaveManager : MonoBehaviour
     public float BestTime { get; private set; }
     public int BestKills { get; private set; }
     public int Cronos { get; private set; }
-    public int CurrentRunCronos { get; private set; }
 
     [Header("Settings")]
     public float MusicVolume { get; private set; } = 0.8f;
@@ -65,7 +64,6 @@ public class SaveManager : MonoBehaviour
         BestTime = PlayerPrefs.GetFloat("BestTime", 0f);
         BestKills = PlayerPrefs.GetInt("BestKills", 0);
         Cronos = PlayerPrefs.GetInt("Cronos", 0);
-        CurrentRunCronos = PlayerPrefs.GetInt("CurrentRunCronos", 0);
 
         MusicVolume = PlayerPrefs.GetFloat("MusicVolume", 0.8f);
         SFXVolume = PlayerPrefs.GetFloat("SFXVolume", 0.8f);
@@ -84,8 +82,6 @@ public class SaveManager : MonoBehaviour
         PlayerPrefs.SetFloat("BestTime", BestTime);
         PlayerPrefs.SetInt("BestKills", BestKills);
         PlayerPrefs.SetInt("Cronos", Cronos);
-        PlayerPrefs.SetInt("CurrentRunCronos", CurrentRunCronos);
-
         PlayerPrefs.SetFloat("MusicVolume", MusicVolume);
         PlayerPrefs.SetFloat("SFXVolume", SFXVolume);
         PlayerPrefs.SetInt("VibrationEnabled", VibrationEnabled ? 1 : 0);
@@ -146,27 +142,6 @@ public class SaveManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    public void SetCurrentRunCronos(int amount)
-    {
-        CurrentRunCronos = amount;
-        PlayerPrefs.SetInt("CurrentRunCronos", amount);
-        PlayerPrefs.Save();
-    }
-
-    public void AddCurrentRunCronos(int amount)
-    {
-        CurrentRunCronos += amount;
-        PlayerPrefs.SetInt("CurrentRunCronos", CurrentRunCronos);
-        PlayerPrefs.Save();
-    }
-
-    public void ResetCurrentRunCronos()
-    {
-        CurrentRunCronos = 0;
-        PlayerPrefs.SetInt("CurrentRunCronos", 0);
-        PlayerPrefs.Save();
-    }
-
     public bool UpdateRecords(float newTime, int newKills)
     {
         bool newRecord = false;
@@ -191,7 +166,7 @@ public class SaveManager : MonoBehaviour
     // Upgrades permanentes
     public bool UpgradeStartingTime()
     {
-        int cost = (StartingTimeLevel + 1) * 150;
+        int cost = (StartingTimeLevel + 1) * 100;
         if (StartingTimeLevel < 5 && SpendCronos(cost))
         {
             StartingTimeLevel++;
@@ -203,7 +178,7 @@ public class SaveManager : MonoBehaviour
 
     public bool UpgradeAttackRange()
     {
-        int cost = (AttackRangeLevel + 1) * 150;
+        int cost = (AttackRangeLevel + 1) * 100;
         if (AttackRangeLevel < 5 && SpendCronos(cost))
         {
             AttackRangeLevel++;
@@ -215,7 +190,7 @@ public class SaveManager : MonoBehaviour
 
     public bool UpgradeDashCooldown()
     {
-        int cost = (DashCooldownLevel + 1) * 150;
+        int cost = (DashCooldownLevel + 1) * 100;
         if (DashCooldownLevel < 5 && SpendCronos(cost))
         {
             DashCooldownLevel++;

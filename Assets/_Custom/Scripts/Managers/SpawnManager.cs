@@ -209,34 +209,33 @@ public class SpawnManager : MonoBehaviour
         // Barato cuando ya es válida; cubre el Player nuevo tras recargar la escena.
         EnsurePlayerTransform();
 
+        if (state != GameManager.GameState.Playing)
+            return;
+
         float dt = Time.deltaTime;
         gameTime += dt;
         spawnTimer -= dt;
         eliteTimer += dt;
 
-        // No spawneamos nuevos enemigos durante la ventana de upgrade
-        if (state == GameManager.GameState.Playing)
+        if (logSpawnDiagnostics) RunDiagnostics(dt);
+
+        cullTimer -= dt;
+        if (cullTimer <= 0f)
         {
-            if (logSpawnDiagnostics) RunDiagnostics(dt);
+            cullTimer = cullInterval;
+            CullDistantEnemies();
+        }
 
-            cullTimer -= dt;
-            if (cullTimer <= 0f)
-            {
-                cullTimer = cullInterval;
-                CullDistantEnemies();
-            }
+        if (spawnTimer <= 0f)
+        {
+            SpawnEnemy();
+            spawnTimer = GetSpawnRate(gameTime);
+        }
 
-            if (spawnTimer <= 0f)
-            {
-                SpawnEnemy();
-                spawnTimer = GetSpawnRate(gameTime);
-            }
-
-            if (eliteTimer >= ELITE_INTERVAL)
-            {
-                eliteTimer = 0f;
-                SpawnElite();
-            }
+        if (eliteTimer >= ELITE_INTERVAL)
+        {
+            eliteTimer = 0f;
+            SpawnElite();
         }
     }
 
@@ -399,6 +398,7 @@ public class SpawnManager : MonoBehaviour
     private void SpawnElite()
     {
         if (elitePool == null) return;
+        if (ActiveEnemyCount >= maxActiveEnemies) return;
 
         // El élite siempre tiene hueco: es el que dispara el upgrade raro.
         EnemyBase enemy = elitePool.Get();

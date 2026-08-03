@@ -8,6 +8,7 @@ public class EnemyManager : MonoBehaviour
 
     public List<EnemyBase> ActiveEnemies { get; private set; } = new List<EnemyBase>();
     public int KillCount { get; private set; } = 0;
+    public int EliteKillCount { get; private set; } = 0;
     public int KillsSinceLastUpgrade { get; private set; } = 0;
 
     private readonly HashSet<EnemyBase> registered = new HashSet<EnemyBase>();
@@ -104,6 +105,7 @@ public class EnemyManager : MonoBehaviour
     public void NotifyEnemyDeath(EnemyBase enemy, bool isElite = false)
     {
         KillCount++;
+        if (isElite) EliteKillCount++;
         KillsSinceLastUpgrade++;
         OnKillCountChanged?.Invoke(KillCount);
         OnEnemyKilled?.Invoke(enemy, isElite);
@@ -120,6 +122,7 @@ public class EnemyManager : MonoBehaviour
     public void ResetKillCount()
     {
         KillCount = 0;
+        EliteKillCount = 0;
         KillsSinceLastUpgrade = 0;
         OnKillCountChanged?.Invoke(KillCount);
     }

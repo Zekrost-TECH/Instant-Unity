@@ -10,18 +10,18 @@ Añade los siguientes componentes a objetos en la escena `1_Game` (o deja que `B
 - `EnemyManager`
 - `UpgradeManager` (asignar `commonUpgrades` y `rareUpgrades`)
 - `AudioManager` (asignar `musicSource`, `sfxSource`, y los clips de audio)
-- `SaveManager` (usar `DontDestroyOnLoad`)
-- `SkinManager`
-- `AdsManager` (stub, listo para integrar LevelPlay)
+- `SaveManager` no debe añadirse al objeto `Managers`: `GameManager` y el menú lo crean de forma persistente.
+- `SkinManager` se crea desde el menú y permanece persistente.
+- `AdsManager` se crea al necesitar el revive; en Editor usa stub y en dispositivo usa AdMob.
 - `HapticManager`
 - `ParticleManager` (asignar prefabs de partículas de muerte, tiempo ganado y dash trail)
 - `BootstrapInitializer` (opcional, para crear managers automáticamente)
 
 ## UI a conectar en la escena de juego
 
-- `HUDController`: asignar `timeText`, `timeBar`, `killCountText`, `runCronosText`, `hudRoot`.
-- `GameOverController`: asignar panel, textos de stats y botones (Watch Ad, Restart, Shop).
-- `UpgradeUIManager`: asignar `upgradeCanvasPanel`, `cardsContainer`, `cardPrefab`, `overlayImage`, `progressBar`, `titleText`.
+- `HUDController`: ya está asignado a `Managers` con barra de tiempo, Cronos de run, kills y HUD raíz.
+- `GameOverController`: ya tiene tiempo, kills, élites, tiempo ganado, golpes, pago y récords asignados.
+- `UpgradeUIManager`: ya tiene título y barra de timeout asignados; el panel se cierra automáticamente tras 8 segundos.
 - `TooltipController`: asignar `tooltipPanel`, `tooltipText`, `timeTextTarget`, `dashButtonTarget`.
 - `JoystickController`: asignar fondo y handle del joystick.
 - `DashButtonController`: asignar `cooldownRing`, `buttonImage`.
@@ -34,7 +34,7 @@ Añade los siguientes componentes a objetos en la escena `1_Game` (o deja que `B
 
 ## Enemigos
 
-- Añadir `EnemyVisualFeedback` a cada prefab de enemigo.
+- `EnemyVisualFeedback` ya está añadido a cada prefab de enemigo.
 - Configurar `baseColor` y `isElite` en `EnemyBase`.
 - Los enemigos élite (`EnemyElite`) activan el glow automáticamente.
 
@@ -42,17 +42,18 @@ Añade los siguientes componentes a objetos en la escena `1_Game` (o deja que `B
 
 - En `MainMenuUI`, asignar los nuevos toggles: `musicToggle`, `sfxToggle`, `vibrationToggle`.
 - Los botones de skins usan `SkinManager` automáticamente.
+- El botón `Cronos` abre `PermanentProgressionUI` con mejoras de tiempo inicial, rango y dash.
 
 ## Audio
 
-- Añadir los clips: `clockBeepSFX`, `timeGainSFX`, `upgradeMissedSFX` al `AudioManager`.
+- `enemyDeathSFX` usa `Assets/Feel/NiceVibrations/HapticSamples/Weapons/ScifiGunshot1.wav`.
+- También están asignados temporalmente `clockBeepSFX`, `timeGainSFX`, `upgradeMissedSFX`, música, tensión y dash desde NiceVibrations.
 - `AudioManager` ya aplica fade de música al 30% durante ventanas de upgrade.
 
 ## Prefabs necesarios
 
-Crear prefabs simples para:
-- `deathParticlePrefab`: objeto con `SpriteRenderer` y `Rigidbody2D`.
-- `timeGainParticlePrefab`: objeto con `SpriteRenderer` y `Rigidbody2D`.
-- `dashTrailPrefab`: objeto con `SpriteRenderer` escalado como rectángulo.
-
-Asignarlos en `ParticleManager`.
+Prefabs ya creados y asignados:
+- `deathParticlePrefab`: `Assets/_Custom/Prefabs/VFX/EnemyDeathParticle.prefab`.
+- `timeGainParticlePrefab`: `Assets/_Custom/Prefabs/VFX/TimeGainParticle.prefab`.
+- `dashTrailPrefab`: `Assets/_Custom/Prefabs/VFX/DashTrail.prefab`.
+- `projectilePrefab`: `Assets/_Custom/Prefabs/Combat/EnemyProjectile.prefab`.

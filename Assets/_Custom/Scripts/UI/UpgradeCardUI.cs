@@ -75,8 +75,13 @@ public class UpgradeCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         // 1. Slide In Animation
         Vector2 endPos = rectTransform.anchoredPosition;
-        // Iniciar fuera de la pantalla (a la derecha)
-        Vector2 startPos = new Vector2(Screen.width + rectTransform.rect.width, endPos.y);
+        // Iniciar fuera de la pantalla (a la derecha), en unidades del canvas de referencia.
+        // Usar Screen.width (píxeles físicos) era incorrecto: el CanvasScaler escala el
+        // rect a 1920x1080 de referencia, así que en la mayoría de dispositivos la carta
+        // partía desde una distancia arbitraria (a veces ya dentro de pantalla).
+        RectTransform canvasRect = rectTransform.root as RectTransform;
+        float canvasWidth = canvasRect != null ? canvasRect.rect.width : 1920f;
+        Vector2 startPos = new Vector2(canvasWidth + rectTransform.rect.width, endPos.y);
         
         rectTransform.anchoredPosition = startPos;
         float duration = 0.5f;
@@ -84,7 +89,7 @@ public class UpgradeCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         
         if (AudioManager.Instance != null)
         {
-            AudioManager.Instance.PlaySFX(AudioManager.Instance.playerDashSFX, 0.5f); // Placeholder sound
+            AudioManager.Instance.PlaySFX(AudioManager.Instance.upgradeSelectSFX, 0.5f);
         }
 
         while (elapsed < duration)

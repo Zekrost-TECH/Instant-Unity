@@ -25,12 +25,14 @@ public class PlayerInput : MonoBehaviour
 
     private void OnEnable()
     {
+        if (inputActions == null) inputActions = new InputSystem_Actions();
         inputActions.Player.Enable();
         inputActions.Player.Dash.performed += HandleDash;
     }
 
     private void OnDisable()
     {
+        if (inputActions == null) return;
         inputActions.Player.Dash.performed -= HandleDash;
         inputActions.Player.Disable();
     }

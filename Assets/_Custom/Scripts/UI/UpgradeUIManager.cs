@@ -11,6 +11,7 @@ public class UpgradeUIManager : MonoBehaviour
     public UpgradeCardUI cardPrefab;
     public Image overlayImage;
     public GameObject progressBarContainer;
+    public Image progressBar;
     public TextMeshProUGUI titleText;
 
     private List<UpgradeCardUI> activeCards = new List<UpgradeCardUI>();
@@ -23,14 +24,13 @@ public class UpgradeUIManager : MonoBehaviour
         }
 
         if (progressBarContainer != null)
-        {
             progressBarContainer.SetActive(false);
-        }
 
         if (UpgradeManager.Instance != null)
         {
             UpgradeManager.Instance.OnUpgradeWindowOpened += HandleUpgradeWindowOpened;
             UpgradeManager.Instance.OnUpgradeWindowClosed += HandleUpgradeWindowClosed;
+            UpgradeManager.Instance.OnUpgradeTimerChanged += HandleUpgradeTimerChanged;
         }
     }
 
@@ -40,6 +40,7 @@ public class UpgradeUIManager : MonoBehaviour
         {
             UpgradeManager.Instance.OnUpgradeWindowOpened -= HandleUpgradeWindowOpened;
             UpgradeManager.Instance.OnUpgradeWindowClosed -= HandleUpgradeWindowClosed;
+            UpgradeManager.Instance.OnUpgradeTimerChanged -= HandleUpgradeTimerChanged;
         }
     }
 
@@ -55,8 +56,11 @@ public class UpgradeUIManager : MonoBehaviour
 
         if (progressBarContainer != null)
         {
-            progressBarContainer.SetActive(false);
+            progressBarContainer.SetActive(true);
         }
+
+        if (progressBar != null)
+            progressBar.fillAmount = 1f;
 
         // Limpiar cartas anteriores si las hubiera
         ClearCards();
@@ -85,6 +89,15 @@ public class UpgradeUIManager : MonoBehaviour
         // Las cartas se liberan al cerrar, no en la siguiente apertura: así no quedan
         // GameObjects (con sus corrutinas) colgando en la jerarquía durante la partida.
         ClearCards();
+    }
+
+    private void HandleUpgradeTimerChanged(float normalizedRemaining)
+    {
+        if (progressBar != null)
+            progressBar.fillAmount = normalizedRemaining;
+
+        if (progressBarContainer != null)
+            progressBarContainer.SetActive(normalizedRemaining > 0f);
     }
 
     private void ClearCards()

@@ -6,7 +6,7 @@ public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
     [Tooltip("Velocidad de movimiento en unidades por segundo.")]
-    public float moveSpeed = 5f;
+    public float moveSpeed = 4.5f;
     
     [Header("Dash Settings")]
     [Tooltip("Velocidad o fuerza del dash.")]
@@ -15,6 +15,8 @@ public class PlayerMovement : MonoBehaviour
     public float dashDuration = 0.2f;
     [Tooltip("Tiempo de enfriamiento (cooldown) entre dashes.")]
     public float dashCooldown = 1f;
+    [Tooltip("Intervalo entre afterimages durante el dash.")]
+    public float dashTrailInterval = 0.04f;
 
     [Header("Health / Defense Settings")]
     [Tooltip("Tiempo de inmunidad en segundos después de recibir un golpe de un enemigo.")]
@@ -37,6 +39,7 @@ public class PlayerMovement : MonoBehaviour
     private bool isDashing;
     private float dashTimeCounter;
     private float dashCooldownCounter;
+    private float dashTrailTimer;
     private float hitInvulnerabilityCounter; 
     private Vector2 dashDirection;
     private Camera mainCamera;
@@ -71,7 +74,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (SaveManager.Instance != null)
         {
-            dashCooldown *= (1f - SaveManager.Instance.DashCooldownLevel * 0.08f);
+            dashCooldown *= (1f - SaveManager.Instance.DashCooldownLevel * 0.06f);
             // El upgrade permanente pasa a formar parte del valor al que vuelve ResetState
             baseDashCooldown = dashCooldown;
             ApplyEquippedSkin();
@@ -236,6 +239,8 @@ public class PlayerMovement : MonoBehaviour
 
             if (ParticleManager.Instance != null)
                 ParticleManager.Instance.SpawnDashTrail(transform.position, dashDirection);
+
+            dashTrailTimer = 0f;
         }
     }
 
@@ -249,6 +254,13 @@ public class PlayerMovement : MonoBehaviour
         if (isDashing)
         {
             dashTimeCounter -= Time.deltaTime;
+            dashTrailTimer -= Time.deltaTime;
+            if (dashTrailTimer <= 0f)
+            {
+                dashTrailTimer = Mathf.Max(0.01f, dashTrailInterval);
+                ParticleManager.Instance?.SpawnDashTrail(transform.position, dashDirection);
+            }
+
             if (dashTimeCounter <= 0f)
             {
                 isDashing = false;
@@ -277,12 +289,15 @@ public class PlayerMovement : MonoBehaviour
 
         if (rb != null)
         {
+            rb.position = Vector2.zero;
+            rb.SetRotation(0f);
             rb.linearVelocity = Vector2.zero;
             rb.angularVelocity = 0f;
         }
 
         isDashing = false;
         dashTimeCounter = 0f;
+        dashTrailTimer = 0f;
         dashCooldownCounter = 0f;
         hitInvulnerabilityCounter = 0f;
     }

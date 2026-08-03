@@ -9,6 +9,8 @@ public class EnemyVisualFeedback : MonoBehaviour
     private SpriteRenderer sr;
     private float flashTimer;
 
+    public Color BaseColor => baseColor;
+
     [Header("Elite Glow")]
     public bool isEliteGlow = false;
     public Color glowColor = new Color(1f, 0.67f, 0f, 0.33f); // #FFAA0055

@@ -17,7 +17,7 @@ public class HUDController : MonoBehaviour
     public Color dangerColor = new Color(1f, 0.2f, 0.2f); // #FF3333
 
     private const string KillsLabel = "Kills: {0}";
-    private const string CronosLabel = "⟳ {0}";
+    private const string CronosLabel = "Cronos: {0}";
 
     private int lastDisplayedSeconds = int.MinValue;
     private int lastDisplayedRunCronos = int.MinValue;

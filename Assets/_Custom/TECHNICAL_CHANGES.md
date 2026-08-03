@@ -14,9 +14,9 @@ Se implementó en código la mayoría de los elementos faltantes del documento d
 
 - **Fase 2 (Game feel y gameplay completo):** partículas, hit flash, glow de élite, reloj pulsante, dash trail, ventana de upgrade con pausa parcial y timeout.
 - **Fase 3 (Progresión y persistencia):** SkinManager, SkinRenderer, onboarding con tooltips, HapticManager.
-- **Fase 4 (Monetización):** AdsManager stub para anuncios recompensados, pantalla de Game Over con botón de anuncio.
+- **Fase 4 (Monetización):** AdsManager con stub de Editor y AdMob para anuncios recompensados, pantalla de Game Over con botón de anuncio.
 
-El código compila sin errores. Ahora se requiere conectar las referencias en el editor de Unity y crear los prefabs de partículas.
+El código compila sin errores. Persisten conexiones de HUD, audio secundario, partículas de ganancia de tiempo y trail de dash por completar.
 
 ---
 
@@ -34,9 +34,9 @@ El código compila sin errores. Ahora se requiere conectar las referencias en el
 - Se implementó reloj pulsante automático cuando `CurrentTime <= 5s` (llama a `AudioManager.PlayClockBeep`).
 - Se añadió `ResetTime()` para reinicios de partida.
 
-**Pendiente:**
+**Estado:**
 
-- Asignar el clip `clockBeepSFX` en el `AudioManager`.
+- `clockBeepSFX` está asignado temporalmente desde NiceVibrations.
 
 ### 2.2 SpawnManager.cs
 
@@ -67,10 +67,9 @@ El código compila sin errores. Ahora se requiere conectar las referencias en el
 - Al cerrar la ventana se restaura música al 100% con fade.
 - Si el tiempo se agota sin elegir, se reproduce `upgradeMissedSFX`.
 
-**Pendiente:**
+**Estado:**
 
-- Asignar las listas `commonUpgrades` y `rareUpgrades` en el inspector.
-- Asignar `upgradeMissedSFX` en el `AudioManager`.
+- Las listas comunes y raras, y `upgradeMissedSFX`, están asignados en `1_Game`.
 
 ### 2.5 GameManager.cs
 
@@ -105,9 +104,9 @@ El código compila sin errores. Ahora se requiere conectar las referencias en el
 - Se añadió `StopMusic()`.
 - Se mantiene `FadeMusicTo(float, float)`.
 
-**Pendiente:**
+**Estado:**
 
-- Asignar los nuevos clips de audio en el inspector.
+- Música, tensión y sonidos secundarios están asignados temporalmente desde NiceVibrations.
 
 ---
 
@@ -124,13 +123,13 @@ El código compila sin errores. Ahora se requiere conectar las referencias en el
 ### 3.2 AdsManager.cs
 
 - Singleton.
-- Stub listo para integrar LevelPlay/Unity Ads.
-- `ShowRewardedAd(Action onRewardGranted)` simula un anuncio y otorga 10-20 Cronos.
+- Stub de Editor y carga real de AdMob en Android/iOS.
+- `ShowRewardedAd(Action onRewardGranted)` usa el stub en Editor y recompensa mediante callback en dispositivo.
 - `IsAdReady` indica si hay anuncio disponible.
 
 **Pendiente:**
 
-- Reemplazar el stub por la integración real del SDK (LevelPlay/AdMob).
+- Sustituir IDs de prueba y configurar unidades reales antes de publicar.
 
 ### 3.3 SkinManager.cs
 
@@ -149,13 +148,13 @@ El código compila sin errores. Ahora se requiere conectar las referencias en el
 
 - Singleton.
 - Pools para partículas de muerte, tiempo ganado y trail del dash.
-- `SpawnDeathParticles(Vector3, Color, int)`: 10-14 figuras geométricas con velocidad aleatoria y gravedad.
+- `SpawnDeathParticles(Vector3, Color, int)`: burst pooleado con color del enemigo, variación radial, fade y límite de partículas activas.
 - `SpawnTimeGainParticles(Vector3, int)`: partículas verdes ascendentes.
 - `SpawnDashTrail(Vector3, Vector2, float)`: rectángulo azul semitransparente.
 
-**Pendiente:**
+**Estado:**
 
-- Crear prefabs simples (SpriteRenderer + Rigidbody2D) y asignarlos en el inspector.
+- Los prefabs de muerte, ganancia de tiempo y trail de dash están creados y asignados.
 
 ---
 
@@ -322,17 +321,17 @@ Se ejecutó `dotnet build Assembly-CSharp.csproj` exitosamente:
 
 ### 8.1 Managers y componentes
 
-- Asegurar que todos los managers existan en la escena de juego (o usar `BootstrapInitializer`).
-- `UpgradeManager`: asignar `commonUpgrades` y `rareUpgrades`.
-- `AudioManager`: asignar `musicSource`, `sfxSource` y todos los clips de audio.
-- `SaveManager`: debe usar `DontDestroyOnLoad`.
-- `ParticleManager`: asignar prefabs de partículas.
+- Los managers necesarios existen en la escena de juego; `BootstrapInitializer` detecta componentes existentes.
+- `UpgradeManager`: listas comunes y raras asignadas.
+- `AudioManager`: clips temporales asignados; las fuentes se crean automáticamente.
+- `SaveManager`: se crea de forma persistente desde el menú o `GameManager`; no añadirlo al objeto `Managers` de `1_Game`.
+- `ParticleManager`: los tres prefabs están asignados.
 
 ### 8.2 UI en escena de juego
 
-- `HUDController`: conectar `timeText`, `timeBar`, `killCountText`, `runCronosText`, `hudRoot`.
-- `GameOverController`: conectar panel, textos y botones.
-- `UpgradeUIManager`: conectar `overlayImage`, `progressBar`, `titleText`.
+- `HUDController`: barra, tiempo, kills, Cronos y raíz del HUD asignados.
+- `GameOverController`: estadísticas detalladas y botones asignados.
+- `UpgradeUIManager`: título, barra de timeout y panel asignados.
 - `TooltipController`: conectar `tooltipPanel`, `tooltipText`, `timeTextTarget`, `dashButtonTarget`.
 - `JoystickController`: conectar fondo y handle.
 - `DashButtonController`: conectar `cooldownRing`, `buttonImage`.
@@ -344,7 +343,7 @@ Se ejecutó `dotnet build Assembly-CSharp.csproj` exitosamente:
 
 ### 8.4 Enemigos
 
-- Añadir `EnemyVisualFeedback` a cada prefab de enemigo.
+- `EnemyVisualFeedback` ya está añadido a cada prefab de enemigo.
 - Configurar `baseColor` e `isElite` en `EnemyBase`.
 
 ### 8.5 Menú principal
@@ -353,21 +352,22 @@ Se ejecutó `dotnet build Assembly-CSharp.csproj` exitosamente:
 
 ### 8.6 Audio
 
-- Crear/importar clips: `clockBeepSFX`, `timeGainSFX`, `upgradeMissedSFX`.
+- Todos los clips de prototipo están asignados desde NiceVibrations.
 - Asignar volumen general: música 0.6, SFX 0.8, daño 1.0, beep 0.4-1.0.
 
 ### 8.7 Prefabs de partículas
 
-Crear 3 prefabs simples con `SpriteRenderer` + `Rigidbody2D`:
+Prefabs creados:
 
-- `deathParticlePrefab`: figura geométrica pequeña.
+- `deathParticlePrefab`: `Assets/_Custom/Prefabs/VFX/EnemyDeathParticle.prefab`.
+- `projectilePrefab`: `Assets/_Custom/Prefabs/Combat/EnemyProjectile.prefab`.
+
 - `timeGainParticlePrefab`: figura pequeña verde.
 - `dashTrailPrefab`: rectángulo azul semitransparente.
 
 ### 8.8 Integración de anuncios
 
-- Reemplazar el stub de `AdsManager` con LevelPlay SDK o Unity Ads.
-- Configurar ID de aplicación y unidades de anuncios.
+- Configurar IDs reales de AdMob y unidades de anuncios.
 
 ---
 
@@ -383,9 +383,8 @@ Crear 3 prefabs simples con `SpriteRenderer` + `Rigidbody2D`:
 
 ## 10. Próximos pasos recomendados
 
-1. Abrir el proyecto en Unity para que genere los archivos `.meta` de los nuevos scripts.
-2. Conectar todas las referencias en los inspectors según la sección 8.
-3. Crear los prefabs de partículas y asignarlos.
-4. Probar el flujo completo: menú → juego → upgrade → Game Over → anuncio/tienda/reinicio.
-5. Ajustar balance de tiempos, spawn y dificultad según pruebas.
-6. Integrar SDK de anuncios reales antes de publicar.
+1. Probar el flujo completo: menú → progresión → juego → upgrade → Game Over → anuncio/reinicio.
+2. Validar HUD y safe area en resoluciones landscape con notch.
+3. Ajustar el balance de tiempos, spawn y dificultad según métricas reales.
+4. Sustituir los audios temporales por contenido con licencia comercial.
+5. Configurar IDs y unidades reales de AdMob antes de publicar.

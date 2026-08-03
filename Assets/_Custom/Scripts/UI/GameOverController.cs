@@ -11,6 +11,9 @@ public class GameOverController : MonoBehaviour
     [Header("Stats Texts (Optional)")]
     public TextMeshProUGUI timeText;
     public TextMeshProUGUI killsText;
+    public TextMeshProUGUI eliteKillsText;
+    public TextMeshProUGUI timeGainedText;
+    public TextMeshProUGUI damageTakenText;
     public TextMeshProUGUI cronosText;
     public TextMeshProUGUI bestTimeText;
     public TextMeshProUGUI bestKillsText;
@@ -28,6 +31,13 @@ public class GameOverController : MonoBehaviour
     {
         if (gameOverPanel != null)
             gameOverPanel.SetActive(false);
+
+        AdsManager ads = AdsManager.Ensure();
+        if (ads != null)
+        {
+            ads.OnAdReadyChanged += HandleAdReadyChanged;
+            reviveAdReady = ads.IsAdReady;
+        }
 
         if (GameManager.Instance != null)
         {
@@ -59,6 +69,9 @@ public class GameOverController : MonoBehaviour
 
         if (exitToMenuButton != null)
             exitToMenuButton.onClick.RemoveListener(OnExitToMenuClicked);
+
+        if (AdsManager.Instance != null)
+            AdsManager.Instance.OnAdReadyChanged -= HandleAdReadyChanged;
     }
 
     private void HandleGameOver(float time, int kills, int cronos, bool newRecord)
@@ -67,22 +80,37 @@ public class GameOverController : MonoBehaviour
             gameOverPanel.SetActive(true);
 
         if (timeText != null)
-            timeText.text = $"{time:F1}s";
+            timeText.text = $"TIME {time:F1}s";
 
         if (killsText != null)
-            killsText.text = kills.ToString();
+            killsText.text = $"KILLS {kills}";
+
+        if (eliteKillsText != null)
+            eliteKillsText.text = $"ELITES {(EnemyManager.Instance != null ? EnemyManager.Instance.EliteKillCount : 0)}";
+
+        if (timeGainedText != null)
+            timeGainedText.text = TimeManager.Instance != null ? $"GAINED +{TimeManager.Instance.TimeGainedThisRun:F1}s" : "GAINED +0.0s";
+
+        if (damageTakenText != null)
+        {
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            PlayerCombat combat = player != null ? player.GetComponent<PlayerCombat>() : null;
+            damageTakenText.text = $"HITS {(combat != null ? combat.DamageTakenCount : 0)}";
+        }
 
         if (cronosText != null)
-            cronosText.text = $"+{cronos} \u27F3";
+            cronosText.text = $"Cronos +{cronos}";
 
         if (bestTimeText != null && SaveManager.Instance != null)
-            bestTimeText.text = $"Record: {SaveManager.Instance.BestTime:F1}s";
+            bestTimeText.text = $"BEST {SaveManager.Instance.BestTime:F1}s";
 
         if (bestKillsText != null && SaveManager.Instance != null)
-            bestKillsText.text = $"Record: {SaveManager.Instance.BestKills}";
+            bestKillsText.text = $"BEST KILLS {SaveManager.Instance.BestKills}";
 
         if (newRecordText != null)
             newRecordText.gameObject.SetActive(newRecord);
+
+        SetButtonsInteractable(true);
     }
 
     private void OnRestartClicked()
@@ -98,7 +126,7 @@ public class GameOverController : MonoBehaviour
         // El AdsManager no está en ninguna escena: sin esto Instance es null y el
         // botón se limitaba a ocultar el panel dejando la partida muerta.
         AdsManager ads = AdsManager.Ensure();
-        if (ads == null) return;
+        if (ads == null || !ads.IsAdReady) return;
 
         // El panel se queda visible durante el anuncio; sólo se cierra al cobrar la
         // recompensa. Los botones se bloquean para no encadenar pulsaciones.
@@ -124,8 +152,17 @@ public class GameOverController : MonoBehaviour
     private void SetButtonsInteractable(bool value)
     {
         if (restartButton != null) restartButton.interactable = value;
-        if (reviveButton != null) reviveButton.interactable = value;
+        if (reviveButton != null) reviveButton.interactable = value && reviveAdReady;
         if (exitToMenuButton != null) exitToMenuButton.interactable = value;
+    }
+
+    private bool reviveAdReady;
+
+    private void HandleAdReadyChanged(bool ready)
+    {
+        reviveAdReady = ready;
+        if (gameOverPanel != null && gameOverPanel.activeSelf)
+            SetButtonsInteractable(true);
     }
 
     private void OnExitToMenuClicked()

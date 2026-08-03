@@ -14,7 +14,7 @@ public class EnemyElite : EnemyBase
 
     [Header("Láser")]
     [Tooltip("Segundos de reloj que le quita al jugador si el láser le alcanza.")]
-    public float laserDamage = 20f;
+    public float laserDamage = 12f;
     [Tooltip("Espera entre disparos.")]
     public float laserCooldown = 5f;
     [Tooltip("Espera antes del primer disparo tras aparecer.")]
