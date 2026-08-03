@@ -33,6 +33,12 @@ public class HapticManager : MonoBehaviour
         Vibrate(40);
     }
 
+    public void TriggerPickup()
+    {
+        if (!IsEnabled()) return;
+        Vibrate(30);
+    }
+
     private bool IsEnabled()
     {
         if (SaveManager.Instance != null)

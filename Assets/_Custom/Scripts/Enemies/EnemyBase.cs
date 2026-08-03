@@ -187,6 +187,15 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     /// </summary>
     protected abstract void UpdateMovement(float deltaTime);
 
+    /// <summary>
+    /// Muerte desde fuera (consumible de limpieza de pantalla): cuenta como baja pero
+    /// no otorga tiempo ni suelta consumible para no encadenar drops infinitos.
+    /// </summary>
+    public void KillByConsumable()
+    {
+        Die(giveReward: false, isKill: true);
+    }
+
     // ── Muerte ───────────────────────────────────────────────────────────────
 
     protected virtual void Die(bool giveReward = true, bool isKill = true)
@@ -205,6 +214,12 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
             TimeManager.Instance.AddTime(timeRewardOnDeath);
             if (AudioManager.Instance != null) AudioManager.Instance.PlayTimeGainSFX();
             if (ParticleManager.Instance != null) ParticleManager.Instance.SpawnTimeGainParticles(deathPosition);
+        }
+
+        // 1b. Recompensa de consumible: sólo en bajas reales del jugador (no kamikaze)
+        if (giveReward && PickupManager.Instance != null)
+        {
+            PickupManager.Instance.RollDrop(deathPosition, isElite);
         }
 
         // 2. Notifica al EnemyManager

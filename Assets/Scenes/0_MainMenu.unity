@@ -5679,7 +5679,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f92ef26f1bfd88142b7a5572f6be4a41, type: 3}
+  m_Sprite: {fileID: 6698174321472809754, guid: 298a44d0220bf894c9a1295a061e54b7, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -8645,6 +8645,7 @@ MonoBehaviour:
   upgradeMissedSFX: {fileID: 8300000, guid: 7e492ad07b6d548eea10ccbd1962e88f, type: 3}
   timeGainSFX: {fileID: 8300000, guid: ccdc1026f90774226b4c0759093380b3, type: 3}
   clockBeepSFX: {fileID: 8300000, guid: adb24518d159048ca9cb62d63113784f, type: 3}
+  pickupSFX: {fileID: 0}
   enemyDeathVolume: 0.45
   eliteDeathVolume: 0.75
 --- !u!1 &1765695099

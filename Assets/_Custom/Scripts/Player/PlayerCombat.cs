@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using MoreMountains.Feedbacks;
 
@@ -37,6 +38,12 @@ public class PlayerCombat : MonoBehaviour
     private float baseAttackRate;
     private float baseAttackRange;
 
+    // Buffs temporales de consumibles
+    private float attackRateMultiplier = 1f;
+    private float attackSpeedTimer;
+    private bool tripleShotActive;
+    private float tripleShotTimer;
+
     private void Awake()
     {
         movement = GetComponent<PlayerMovement>();
@@ -67,6 +74,18 @@ public class PlayerCombat : MonoBehaviour
         if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameManager.GameState.Playing)
             return;
 
+        if (attackSpeedTimer > 0f)
+        {
+            attackSpeedTimer -= Time.deltaTime;
+            if (attackSpeedTimer <= 0f) attackRateMultiplier = 1f;
+        }
+
+        if (tripleShotTimer > 0f)
+        {
+            tripleShotTimer -= Time.deltaTime;
+            if (tripleShotTimer <= 0f) tripleShotActive = false;
+        }
+
         // Si el rango cambia (por ejemplo, mediante un Upgrade), actualizamos el visual dinámicamente
         if (lastRange != attackRange)
         {
@@ -78,7 +97,7 @@ public class PlayerCombat : MonoBehaviour
 
         if (attackTimer <= 0f)
         {
-            attackTimer = attackRate;
+            attackTimer = attackRate * attackRateMultiplier;
             TryAttack();
         }
     }
@@ -116,6 +135,22 @@ public class PlayerCombat : MonoBehaviour
     {
         if (EnemyManager.Instance == null) return;
 
+        if (tripleShotActive)
+        {
+            // Triple disparo: golpea hasta 3 enemigos a la vez
+            List<EnemyBase> targets = EnemyManager.Instance.GetNearestEnemies(transform.position, attackRange, 3);
+            bool hitAny = false;
+            for (int i = 0; i < targets.Count; i++)
+            {
+                if (targets[i] == null) continue;
+                targets[i].OnHit(attackDamage);
+                hitAny = true;
+            }
+
+            if (hitAny && hitEnemyFeedback != null) hitEnemyFeedback.PlayFeedbacks();
+            return;
+        }
+
         EnemyBase target = EnemyManager.Instance.GetNearestEnemy(transform.position, attackRange);
         if (target != null)
         {
@@ -145,11 +180,27 @@ public class PlayerCombat : MonoBehaviour
         return true;
     }
 
+    public void ApplyAttackSpeedBoost(float multiplier, float duration)
+    {
+        attackRateMultiplier = multiplier;
+        attackSpeedTimer = duration;
+    }
+
+    public void ApplyTripleShot(float duration)
+    {
+        tripleShotActive = true;
+        tripleShotTimer = Mathf.Max(tripleShotTimer, duration);
+    }
+
     public void ResetState()
     {
         attackDamage = baseAttackDamage;
         attackRate = baseAttackRate;
         attackRange = baseAttackRange;
+        attackRateMultiplier = 1f;
+        attackSpeedTimer = 0f;
+        tripleShotActive = false;
+        tripleShotTimer = 0f;
         DamageTakenCount = 0;
         lastRange = attackRange;
         attackTimer = 0f;

@@ -19,6 +19,7 @@ public class AudioManager : MonoBehaviour
     public AudioClip upgradeMissedSFX;
     public AudioClip timeGainSFX;
     public AudioClip clockBeepSFX;
+    public AudioClip pickupSFX;
 
     [Header("Death Feel")]
     [Range(0f, 1f)] public float enemyDeathVolume = 0.45f;
@@ -129,6 +130,11 @@ public class AudioManager : MonoBehaviour
         {
             sfxSource.PlayOneShot(timeGainSFX, 0.8f);
         }
+    }
+
+    public void PlayPickupSFX()
+    {
+        PlaySFX(pickupSFX != null ? pickupSFX : timeGainSFX, 0.8f);
     }
 
     public void PlayEnemyDeathSFX(bool isElite)

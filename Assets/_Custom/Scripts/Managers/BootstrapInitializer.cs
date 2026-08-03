@@ -17,6 +17,7 @@ public class BootstrapInitializer : MonoBehaviour
     public GameObject hapticManagerPrefab;
     public GameObject particleManagerPrefab;
     public GameObject hitVfxManagerPrefab;
+    public GameObject pickupManagerPrefab;
 
     [Header("Scenes")]
     public string mainMenuSceneName = "0_MainMenu";
@@ -38,6 +39,7 @@ public class BootstrapInitializer : MonoBehaviour
         EnsureManager(ref hapticManagerPrefab, "HapticManager");
         EnsureManager(ref particleManagerPrefab, "ParticleManager");
         EnsureManager(ref hitVfxManagerPrefab, "HitVFXManager");
+        EnsureManager(ref pickupManagerPrefab, "PickupManager");
     }
 
     private void Start()
@@ -85,6 +87,7 @@ public class BootstrapInitializer : MonoBehaviour
             case "HapticManager": return FindAnyObjectByType<HapticManager>() != null;
             case "ParticleManager": return FindAnyObjectByType<ParticleManager>() != null;
             case "HitVFXManager": return FindAnyObjectByType<HitVFXManager>() != null;
+            case "PickupManager": return FindAnyObjectByType<PickupManager>() != null;
             default: return false;
         }
     }
@@ -106,6 +109,7 @@ public class BootstrapInitializer : MonoBehaviour
             case "HapticManager": obj.AddComponent<HapticManager>(); break;
             case "ParticleManager": obj.AddComponent<ParticleManager>(); break;
             case "HitVFXManager": obj.AddComponent<HitVFXManager>(); break;
+            case "PickupManager": obj.AddComponent<PickupManager>(); break;
         }
     }
 }

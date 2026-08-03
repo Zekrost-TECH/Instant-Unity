@@ -10,8 +10,15 @@ public class EnemyManager : MonoBehaviour
     public int KillCount { get; private set; } = 0;
     public int EliteKillCount { get; private set; } = 0;
     public int KillsSinceLastUpgrade { get; private set; } = 0;
+    public int UpgradeWindowsOpened { get; private set; } = 0;
+
+    private const int UPGRADE_BASE_THRESHOLD = 10;
+    private const int UPGRADE_THRESHOLD_GROWTH = 4;
+    private const int UPGRADE_THRESHOLD_CAP = 38;
 
     private readonly HashSet<EnemyBase> registered = new HashSet<EnemyBase>();
+    private readonly List<EnemyBase> nearestBuffer = new List<EnemyBase>(8);
+    private readonly List<EnemyBase> killBuffer = new List<EnemyBase>(64);
     private bool wasPlaying = false;
 
     public event Action<EnemyBase, bool> OnEnemyKilled;
@@ -110,9 +117,10 @@ public class EnemyManager : MonoBehaviour
         OnKillCountChanged?.Invoke(KillCount);
         OnEnemyKilled?.Invoke(enemy, isElite);
 
-        if (KillsSinceLastUpgrade >= 20)
+        if (KillsSinceLastUpgrade >= GetUpgradeThreshold())
         {
             KillsSinceLastUpgrade = 0;
+            UpgradeWindowsOpened++;
             OnKillsThresholdReached?.Invoke();
         }
         
@@ -124,7 +132,17 @@ public class EnemyManager : MonoBehaviour
         KillCount = 0;
         EliteKillCount = 0;
         KillsSinceLastUpgrade = 0;
+        UpgradeWindowsOpened = 0;
         OnKillCountChanged?.Invoke(KillCount);
+    }
+
+    /// <summary>
+    /// Cuanto más sobrevives, más kills cuesta abrir la siguiente ventana de mejora:
+    /// al inicio salen rápido (10 kills) y van espaciándose hasta tope (38 kills).
+    /// </summary>
+    private int GetUpgradeThreshold()
+    {
+        return Math.Min(UPGRADE_BASE_THRESHOLD + UpgradeWindowsOpened * UPGRADE_THRESHOLD_GROWTH, UPGRADE_THRESHOLD_CAP);
     }
 
     public void ResetKillsSinceLastUpgrade()
@@ -150,5 +168,70 @@ public class EnemyManager : MonoBehaviour
         }
 
         return nearest;
+    }
+
+    /// <summary>
+    /// Devuelve hasta <paramref name="count"/> enemigos dentro del rango, ordenados por distancia
+    /// (para el triple disparo del consumible).
+    /// </summary>
+    public List<EnemyBase> GetNearestEnemies(Vector3 position, float range, int count)
+    {
+        nearestBuffer.Clear();
+        if (count <= 0) return nearestBuffer;
+
+        float rangeSqr = range * range;
+        for (int i = 0; i < ActiveEnemies.Count; i++)
+        {
+            EnemyBase enemy = ActiveEnemies[i];
+            if (enemy == null || !enemy.gameObject.activeInHierarchy) continue;
+
+            float distSqr = (enemy.transform.position - position).sqrMagnitude;
+            if (distSqr > rangeSqr) continue;
+
+            // Inserta ordenado por distancia (inserción simple: count es 2-3)
+            int insertIndex = nearestBuffer.Count;
+            for (int j = 0; j < nearestBuffer.Count; j++)
+            {
+                float bufferedSqr = (nearestBuffer[j].transform.position - position).sqrMagnitude;
+                if (distSqr < bufferedSqr)
+                {
+                    insertIndex = j;
+                    break;
+                }
+            }
+
+            if (nearestBuffer.Count < count)
+            {
+                nearestBuffer.Insert(insertIndex, enemy);
+            }
+            else if (insertIndex < count - 1)
+            {
+                nearestBuffer.RemoveAt(count - 1);
+                nearestBuffer.Insert(insertIndex, enemy);
+            }
+        }
+
+        return nearestBuffer;
+    }
+
+    /// <summary>
+    /// Mata a todos los enemigos vivos (consumible de limpieza). Cuenta bajas
+    /// (progreso a mejoras + cronos) pero no otorga tiempo: la presión del reloj se mantiene.
+    /// </summary>
+    public void KillAllEnemies()
+    {
+        // Copia para iterar de forma segura mientras los OnDisable modifican la lista original
+        killBuffer.Clear();
+        killBuffer.AddRange(ActiveEnemies);
+
+        for (int i = 0; i < killBuffer.Count; i++)
+        {
+            EnemyBase enemy = killBuffer[i];
+            if (enemy != null && enemy.gameObject.activeInHierarchy)
+            {
+                enemy.KillByConsumable();
+            }
+        }
+        killBuffer.Clear();
     }
 }

@@ -47,7 +47,12 @@ public class PlayerMovement : MonoBehaviour
     private float baseMoveSpeed;
     private float baseDashCooldown;
 
-    public bool IsInvulnerable => isDashing || hitInvulnerabilityCounter > 0f;
+    // Buffs temporales de consumibles
+    private float speedMultiplier = 1f;
+    private float speedBoostTimer;
+    private float invulnerabilityTimer;
+
+    public bool IsInvulnerable => isDashing || hitInvulnerabilityCounter > 0f || invulnerabilityTimer > 0f;
     public bool IsDashing => isDashing;
     public float DashCooldownRemaining => dashCooldownCounter;
     public float DashCooldownTotal => dashCooldown;
@@ -152,7 +157,7 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
-            rb.linearVelocity = playerInput.MoveInput.normalized * moveSpeed;
+            rb.linearVelocity = playerInput.MoveInput.normalized * moveSpeed * speedMultiplier;
         }
 
         ClampToPlayArea();
@@ -251,6 +256,17 @@ public class PlayerMovement : MonoBehaviour
             hitInvulnerabilityCounter -= Time.deltaTime;
         }
 
+        if (speedBoostTimer > 0f)
+        {
+            speedBoostTimer -= Time.deltaTime;
+            if (speedBoostTimer <= 0f) speedMultiplier = 1f;
+        }
+
+        if (invulnerabilityTimer > 0f)
+        {
+            invulnerabilityTimer -= Time.deltaTime;
+        }
+
         if (isDashing)
         {
             dashTimeCounter -= Time.deltaTime;
@@ -278,10 +294,24 @@ public class PlayerMovement : MonoBehaviour
         hitInvulnerabilityCounter = hitInvulnerabilityDuration;
     }
 
+    public void ApplySpeedBoost(float multiplier, float duration)
+    {
+        speedMultiplier = multiplier;
+        speedBoostTimer = duration;
+    }
+
+    public void ApplyInvulnerability(float duration)
+    {
+        invulnerabilityTimer = Mathf.Max(invulnerabilityTimer, duration);
+    }
+
     public void ResetState()
     {
         moveSpeed = baseMoveSpeed;
         dashCooldown = baseDashCooldown;
+        speedMultiplier = 1f;
+        speedBoostTimer = 0f;
+        invulnerabilityTimer = 0f;
 
         transform.position = Vector3.zero;
         lastMoveDirection = Vector2.up;

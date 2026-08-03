@@ -191,6 +191,7 @@ public class GameManager : MonoBehaviour
 
         // Limpiar enemigos y proyectiles antes de resetear el resto
         SpawnManager.Instance?.ClearAllEnemies();
+        PickupManager.Instance?.ClearAll();
 
         // Resetear el jugador (posición, velocidad, stats base, estado de dash)
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
