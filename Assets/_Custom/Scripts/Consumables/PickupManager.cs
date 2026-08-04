@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -33,6 +34,8 @@ public class PickupManager : MonoBehaviour
     public int poolMaxSize = 48;
 
     private ObjectPool<PickupBase> pickupPool;
+    private ObjectPool<PickupRingFx> ringPool;
+    private ObjectPool<PickupFloatingText> floatingTextPool;
     private Transform container;
     private readonly List<PickupBase> activePickups = new List<PickupBase>(32);
 
@@ -40,6 +43,7 @@ public class PickupManager : MonoBehaviour
     private PlayerCombat cachedCombat;
 
     private const string DontDestroyOnLoadScene = "DontDestroyOnLoad";
+    private const string PickupFontPath = "Fonts & Materials/LiberationSans SDF";
 
     private static readonly Color TimeColor = new Color(0f, 1f, 0.53f);       // #00FF88
     private static readonly Color SpeedColor = new Color(0f, 0.8f, 1f);        // #00CCFF
@@ -60,11 +64,14 @@ public class PickupManager : MonoBehaviour
         container = new GameObject("PickupPool").transform;
         container.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
 
-        // El prefab se construye en runtime (GeometryRenderer + trigger + imán):
-        // así el sistema funciona sin wirear prefabs en el Inspector, como el láser del élite.
+        // El pickup se construye en runtime con SpriteRenderer + sprite procedural blanco
+        // (tinte por color): GeometryRenderer/mesh sin UVs se ve magenta en URP.
         GameObject template = new GameObject("PickupTemplate");
         template.transform.SetParent(container, false);
-        template.AddComponent<GeometryRenderer>();
+
+        SpriteRenderer sr = template.AddComponent<SpriteRenderer>();
+        sr.sprite = ProceduralSprites.Get("circle");
+        sr.sortingOrder = 10;
 
         CircleCollider2D trigger = template.AddComponent<CircleCollider2D>();
         trigger.isTrigger = true;
@@ -86,6 +93,60 @@ public class PickupManager : MonoBehaviour
             defaultCapacity: poolCapacity,
             maxSize: poolMaxSize
         );
+
+        ringPool = CreateRingPool();
+        floatingTextPool = CreateFloatingTextPool();
+    }
+
+    private ObjectPool<PickupRingFx> CreateRingPool()
+    {
+        GameObject ringTemplate = new GameObject("PickupRingTemplate");
+        ringTemplate.transform.SetParent(container, false);
+
+        SpriteRenderer sr = ringTemplate.AddComponent<SpriteRenderer>();
+        sr.sprite = ProceduralSprites.Get("circle");
+        sr.sortingOrder = 20;
+
+        PickupRingFx ring = ringTemplate.AddComponent<PickupRingFx>();
+        ringTemplate.SetActive(false);
+
+        return new ObjectPool<PickupRingFx>(
+            createFunc: () => Instantiate(ring, container),
+            actionOnGet: r => r.gameObject.SetActive(true),
+            actionOnRelease: r => { if (r != null) r.gameObject.SetActive(false); },
+            actionOnDestroy: r => { if (r != null) Destroy(r.gameObject); },
+            collectionCheck: false,
+            defaultCapacity: poolCapacity,
+            maxSize: poolMaxSize
+        );
+    }
+
+    private ObjectPool<PickupFloatingText> CreateFloatingTextPool()
+    {
+        GameObject textTemplate = new GameObject("PickupTextTemplate");
+        textTemplate.transform.SetParent(container, false);
+
+        TextMeshPro textMesh = textTemplate.AddComponent<TextMeshPro>();
+        TMP_FontAsset font = Resources.Load<TMP_FontAsset>(PickupFontPath);
+        if (font != null) textMesh.font = font;
+        textMesh.fontSize = 3.2f;
+        textMesh.alignment = TextAlignmentOptions.Center;
+        textMesh.enableWordWrapping = false;
+        textMesh.alpha = 1f;
+        textMesh.GetComponent<MeshRenderer>().sortingOrder = 30;
+
+        PickupFloatingText floatingText = textTemplate.AddComponent<PickupFloatingText>();
+        textTemplate.SetActive(false);
+
+        return new ObjectPool<PickupFloatingText>(
+            createFunc: () => Instantiate(floatingText, container),
+            actionOnGet: t => t.gameObject.SetActive(true),
+            actionOnRelease: t => { if (t != null) t.gameObject.SetActive(false); },
+            actionOnDestroy: t => { if (t != null) Destroy(t.gameObject); },
+            collectionCheck: false,
+            defaultCapacity: 8,
+            maxSize: 24
+        );
     }
 
     private void Start()
@@ -102,6 +163,8 @@ public class PickupManager : MonoBehaviour
 
         activePickups.Clear();
         pickupPool?.Clear();
+        ringPool?.Clear();
+        floatingTextPool?.Clear();
         if (container != null) Destroy(container.gameObject);
         Instance = null;
     }
@@ -136,23 +199,37 @@ public class PickupManager : MonoBehaviour
         if (pickupPool == null) return;
 
         PickupBase pickup = pickupPool.Get();
-        (Color color, float size, GeometryRenderer.ShapeType shape) = GetVisual(type);
-        pickup.Setup(type, color, size, shape);
+        (Sprite sprite, Color color, float size) = GetVisual(type);
+        pickup.Setup(type, sprite, color, size);
         pickup.transform.position = position;
         activePickups.Add(pickup);
     }
 
-    private (Color color, float size, GeometryRenderer.ShapeType shape) GetVisual(ConsumableType type)
+    private (Sprite sprite, Color color, float size) GetVisual(ConsumableType type)
     {
         switch (type)
         {
-            case ConsumableType.TimeBonus: return (TimeColor, 0.45f, GeometryRenderer.ShapeType.Circle);
-            case ConsumableType.SpeedBoost: return (SpeedColor, 0.5f, GeometryRenderer.ShapeType.Triangle);
-            case ConsumableType.AttackSpeedBoost: return (AttackSpeedColor, 0.4f, GeometryRenderer.ShapeType.Square);
-            case ConsumableType.TripleShot: return (TripleColor, 0.5f, GeometryRenderer.ShapeType.Hexagon);
-            case ConsumableType.Invulnerability: return (InvulnColor, 0.5f, GeometryRenderer.ShapeType.Diamond);
-            case ConsumableType.ScreenClear: return (ClearColor, 0.6f, GeometryRenderer.ShapeType.Circle);
-            default: return (Color.white, 0.45f, GeometryRenderer.ShapeType.Circle);
+            case ConsumableType.TimeBonus: return (ProceduralSprites.Get("circle"), TimeColor, 0.45f);
+            case ConsumableType.SpeedBoost: return (ProceduralSprites.Get("triangle"), SpeedColor, 0.5f);
+            case ConsumableType.AttackSpeedBoost: return (ProceduralSprites.Get("square"), AttackSpeedColor, 0.4f);
+            case ConsumableType.TripleShot: return (ProceduralSprites.Get("hexagon"), TripleColor, 0.5f);
+            case ConsumableType.Invulnerability: return (ProceduralSprites.Get("diamond"), InvulnColor, 0.5f);
+            case ConsumableType.ScreenClear: return (ProceduralSprites.Get("circle"), ClearColor, 0.6f);
+            default: return (ProceduralSprites.Get("circle"), Color.white, 0.45f);
+        }
+    }
+
+    private string GetLabel(ConsumableType type)
+    {
+        switch (type)
+        {
+            case ConsumableType.TimeBonus: return $"+{timeBonusAmount:0}s";
+            case ConsumableType.SpeedBoost: return "SPEED UP!";
+            case ConsumableType.AttackSpeedBoost: return "FAST ATTACKS!";
+            case ConsumableType.TripleShot: return "TRIPLE SHOT!";
+            case ConsumableType.Invulnerability: return "INVINCIBLE!";
+            case ConsumableType.ScreenClear: return "CLEARED!";
+            default: return string.Empty;
         }
     }
 
@@ -160,16 +237,38 @@ public class PickupManager : MonoBehaviour
     {
         if (pickup == null) return;
 
-        if (pickup.Type == ConsumableType.TimeBonus)
-        {
-            if (ParticleManager.Instance != null)
-                ParticleManager.Instance.SpawnTimeGainParticles(pickup.transform.position);
-        }
+        Vector3 position = pickup.transform.position;
+        Color color = GetVisual(pickup.Type).color;
+
+        // Efectos al recoger: burst de partículas + anillo expansivo + texto flotante
+        if (ParticleManager.Instance != null)
+            ParticleManager.Instance.SpawnDeathParticles(position, color, 10);
+
+        SpawnRing(position, color);
+        SpawnFloatingText(position, GetLabel(pickup.Type), color);
 
         ApplyEffect(pickup.Type);
         AudioManager.Instance?.PlayPickupSFX();
         HapticManager.Instance?.TriggerPickup();
         Recycle(pickup);
+    }
+
+    private void SpawnRing(Vector3 position, Color color)
+    {
+        if (ringPool == null) return;
+
+        PickupRingFx ring = ringPool.Get();
+        ring.Setup(color);
+        ring.transform.position = position;
+    }
+
+    private void SpawnFloatingText(Vector3 position, string message, Color color)
+    {
+        if (floatingTextPool == null || string.IsNullOrEmpty(message)) return;
+
+        PickupFloatingText floatingText = floatingTextPool.Get();
+        floatingText.Setup(message, color);
+        floatingText.transform.position = position + new Vector3(0f, 0.6f, 0f);
     }
 
     private void ApplyEffect(ConsumableType type)
@@ -230,6 +329,18 @@ public class PickupManager : MonoBehaviour
         }
 
         pickupPool.Release(pickup);
+    }
+
+    public void RecycleRing(PickupRingFx ring)
+    {
+        if (ring == null || ringPool == null) return;
+        ringPool.Release(ring);
+    }
+
+    public void RecycleFloatingText(PickupFloatingText floatingText)
+    {
+        if (floatingText == null || floatingTextPool == null) return;
+        floatingTextPool.Release(floatingText);
     }
 
     public void ClearAll()

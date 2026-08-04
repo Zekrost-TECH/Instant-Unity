@@ -4954,6 +4954,7 @@ GameObject:
   - component: {fileID: 1732460716}
   - component: {fileID: 1732460718}
   - component: {fileID: 1732460719}
+  - component: {fileID: 1732460720}
   m_Layer: 0
   m_Name: Managers
   m_TagString: Untagged
@@ -5214,6 +5215,7 @@ MonoBehaviour:
   upgradeMissedSFX: {fileID: 8300000, guid: 7e492ad07b6d548eea10ccbd1962e88f, type: 3}
   timeGainSFX: {fileID: 8300000, guid: ccdc1026f90774226b4c0759093380b3, type: 3}
   clockBeepSFX: {fileID: 8300000, guid: adb24518d159048ca9cb62d63113784f, type: 3}
+  pickupSFX: {fileID: 0}
   enemyDeathVolume: 0.45
   eliteDeathVolume: 0.75
 --- !u!114 &1732460718
@@ -5248,6 +5250,29 @@ MonoBehaviour:
   calmColor: {r: 1, g: 1, b: 1, a: 1}
   warningColor: {r: 1, g: 0.67, b: 0, a: 1}
   dangerColor: {r: 1, g: 0.2, b: 0.2, a: 1}
+--- !u!114 &1732460720
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1732460705}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 158f48aa287abae469f9939eae56f2a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PickupManager
+  normalDropChance: 0.07
+  eliteDropChance: 1
+  timeBonusAmount: 8
+  speedBoostMultiplier: 1.5
+  speedBoostDuration: 6
+  attackSpeedMultiplier: 0.5
+  attackSpeedDuration: 6
+  tripleShotDuration: 8
+  invulnerabilityDuration: 4
+  poolCapacity: 16
+  poolMaxSize: 48
 --- !u!1 &1744461811
 GameObject:
   m_ObjectHideFlags: 0
