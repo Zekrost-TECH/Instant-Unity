@@ -102,6 +102,7 @@ public class MainMenuUI : MonoBehaviour
 
     public void OpenShop()
     {
+        CloseOtherPanels();
         if (skinShop != null) skinShop.Open();
     }
 
@@ -112,6 +113,7 @@ public class MainMenuUI : MonoBehaviour
 
     public void OpenRecords()
     {
+        CloseOtherPanels();
         if (recordsUI != null) recordsUI.Open();
     }
 
@@ -122,6 +124,7 @@ public class MainMenuUI : MonoBehaviour
 
     public void OpenProgression()
     {
+        CloseOtherPanels();
         if (progressionUI != null) progressionUI.Open();
     }
 
@@ -132,12 +135,26 @@ public class MainMenuUI : MonoBehaviour
 
     public void OpenSettings()
     {
+        CloseOtherPanels();
         if (settingsUI != null) settingsUI.Open();
     }
 
     public void CloseSettings()
     {
         if (settingsUI != null) settingsUI.Close();
+    }
+
+    /// <summary>
+    /// Sólo puede haber un panel abierto a la vez: abrir uno cierra los demás.
+    /// Sin esto, cualquier flujo (p. ej. abrir la tienda con la progresión abierta)
+    /// dejaba dos ventanas encima, como reportó QA.
+    /// </summary>
+    private void CloseOtherPanels()
+    {
+        if (recordsUI != null && recordsUI.IsOpen) recordsUI.Close();
+        if (settingsUI != null && settingsUI.IsOpen) settingsUI.Close();
+        if (progressionUI != null && progressionUI.IsOpen) progressionUI.Close();
+        if (skinShop != null && skinShop.IsOpen) skinShop.Close();
     }
 
     /// <summary>

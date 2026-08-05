@@ -28,6 +28,8 @@ public class PermanentProgressionUI : MonoBehaviour
 
     private const int MaxLevel = 5;
 
+    public bool IsOpen => progressionPanel != null && progressionPanel.activeSelf;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)

@@ -13,6 +13,12 @@ public class GameManager : MonoBehaviour
     public string gameSceneName = "1_Game";
     public string mainMenuSceneName = "0_MainMenu";
 
+    [Header("Revivir")]
+    [Tooltip("Segundos de invulnerabilidad extra tras revivir por anuncio (además del hit standard).")]
+    public float reviveGraceDuration = 3f;
+    [Tooltip("Radio (unidades) en el que se reciclan enemigos al revivir para no morir al instante en el enjambre.")]
+    public float reviveClearRadius = 7f;
+
     public event Action<GameState> OnGameStateChanged;
     public event Action<float, int, int, bool> OnGameOver; // time, kills, payout, newRecord
     public event Action OnGameRestarted;
@@ -124,6 +130,11 @@ public class GameManager : MonoBehaviour
     {
         if (CurrentState == GameState.GameOver) return;
 
+        // Defensa contra hit-stops/freezes huérfanos (MMF_TimescaleModifier): si la
+        // partida acaba con un slow-mo activo, timeScale se quedaría congelado tras
+        // el panel de Game Over y el revivir parecería pegado.
+        Time.timeScale = 1f;
+
         ChangeState(GameState.GameOver);
         Debug.Log("¡Game Over!");
         AudioManager.Instance?.FadeMusicTo(0.3f, 0.3f);
@@ -166,6 +177,10 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void Revive()
     {
+        // La partida entera (reloj, enemigos, físicas) depende de timeScale: se fuerza
+        // a 1 por si un hit-stop quedó sin restaurar al abrirse el anuncio.
+        Time.timeScale = 1f;
+
         if (TimeManager.Instance != null)
             TimeManager.Instance.FillToMax();
 
@@ -174,7 +189,17 @@ public class GameManager : MonoBehaviour
         if (playerObj != null)
         {
             PlayerMovement movement = playerObj.GetComponent<PlayerMovement>();
-            if (movement != null) movement.TriggerHitInvulnerability();
+            if (movement != null)
+            {
+                movement.TriggerHitInvulnerability();
+                movement.ApplyInvulnerability(reviveGraceDuration);
+            }
+
+            // Limpiar el enjambre que rodea al jugador: el 1s de invulnerabilidad
+            // standard no bastaba y el "revive" se sentía como quedarse pegado
+            // (muerte otra vez a los 2 segundos del anuncio).
+            if (EnemyManager.Instance != null)
+                EnemyManager.Instance.RecycleEnemiesAround(playerObj.transform.position, reviveClearRadius);
         }
 
         AudioManager.Instance?.FadeMusicTo(1f, 0.3f);

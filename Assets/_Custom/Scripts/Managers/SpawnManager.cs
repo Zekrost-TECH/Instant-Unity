@@ -26,7 +26,7 @@ public class SpawnManager : MonoBehaviour
 
     [Header("Diagnóstico")]
     [Tooltip("Si no hay enemigos vivos, escribe en consola qué puerta los está bloqueando. Desactívalo cuando ya no lo necesites.")]
-    public bool logSpawnDiagnostics = true;
+    public bool logSpawnDiagnostics = false;
 
     [Header("Enemy Prefabs")]
     public EnemyBase fodderPrefab;

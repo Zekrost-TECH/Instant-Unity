@@ -131,7 +131,7 @@ public class PickupManager : MonoBehaviour
         if (font != null) textMesh.font = font;
         textMesh.fontSize = 3.2f;
         textMesh.alignment = TextAlignmentOptions.Center;
-        textMesh.enableWordWrapping = false;
+        textMesh.textWrappingMode = TextWrappingModes.NoWrap;
         textMesh.alpha = 1f;
         textMesh.GetComponent<MeshRenderer>().sortingOrder = 30;
 

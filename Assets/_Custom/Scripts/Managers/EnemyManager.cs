@@ -234,4 +234,30 @@ public class EnemyManager : MonoBehaviour
         }
         killBuffer.Clear();
     }
+
+    /// <summary>
+    /// Recicla (sin recompensa, baja ni tiempo) los enemigos dentro del radio. Lo usa el
+    /// revivir por anuncio para que el jugador no reaparezca dentro del enjambre que lo
+    /// mató y caiga muerto a los dos segundos.
+    /// </summary>
+    public void RecycleEnemiesAround(Vector3 center, float radius)
+    {
+        float radiusSqr = radius * radius;
+
+        killBuffer.Clear();
+        for (int i = 0; i < ActiveEnemies.Count; i++)
+        {
+            EnemyBase enemy = ActiveEnemies[i];
+            if (enemy == null) continue;
+
+            if (((Vector2)enemy.transform.position - (Vector2)center).sqrMagnitude <= radiusSqr)
+                killBuffer.Add(enemy);
+        }
+
+        for (int i = 0; i < killBuffer.Count; i++)
+        {
+            if (killBuffer[i] != null) killBuffer[i].Recycle();
+        }
+        killBuffer.Clear();
+    }
 }

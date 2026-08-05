@@ -2260,10 +2260,10 @@ MonoBehaviour:
         Owner: {fileID: 947144258}
         DebugActive: 0
         Mode: 0
-        TimeScale: 0.05
-        TimeScaleDuration: 0.08
-        ResetTimescaleOnStop: 0
-        UnfreezeTimescaleOnStop: 0
+        TimeScale: 0.3
+        TimeScaleDuration: 0.04
+        ResetTimescaleOnStop: 1
+        UnfreezeTimescaleOnStop: 1
         TimeScaleLerp: 0
         TimescaleLerpMode: 0
         TimeScaleLerpSpeed: 1
@@ -5025,7 +5025,7 @@ MonoBehaviour:
   prewarmPerPool: 12
   disableEnemyToEnemyCollisions: 1
   enemyLayerName: Enemigos
-  logSpawnDiagnostics: 1
+  logSpawnDiagnostics: 0
   fodderPrefab: {fileID: 785346505017970004, guid: 8473cc5e5b4d841478913276a0027db6, type: 3}
   fastPrefab: {fileID: -5904456013875139826, guid: 46066ac87a2ccb04297ca104f1c9c21a, type: 3}
   tankPrefab: {fileID: 5205349074175314423, guid: f7c6da9a1879de5478d71ba49bd05d9f, type: 3}
