@@ -142,8 +142,12 @@ public class PlayerCombat : MonoBehaviour
             bool hitAny = false;
             for (int i = 0; i < targets.Count; i++)
             {
-                if (targets[i] == null) continue;
-                targets[i].OnHit(attackDamage);
+                EnemyBase targetEnemy = targets[i];
+                if (targetEnemy == null) continue;
+
+                Vector3 hitPosition = targetEnemy.transform.position;
+                targetEnemy.OnHit(attackDamage);
+                DamageNumbersManager.Instance?.SpawnEnemyDamage(hitPosition, attackDamage);
                 hitAny = true;
             }
 
@@ -154,8 +158,10 @@ public class PlayerCombat : MonoBehaviour
         EnemyBase target = EnemyManager.Instance.GetNearestEnemy(transform.position, attackRange);
         if (target != null)
         {
+            Vector3 hitPosition = target.transform.position;
             target.OnHit(attackDamage);
-            
+            DamageNumbersManager.Instance?.SpawnEnemyDamage(hitPosition, attackDamage);
+
             // Jugar GameFeel: Hit-Stop, sonido de hit
             if (hitEnemyFeedback != null) hitEnemyFeedback.PlayFeedbacks();
         }
@@ -167,7 +173,10 @@ public class PlayerCombat : MonoBehaviour
         if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameManager.GameState.Playing) return false;
 
         float damageToApply = customDamage > 0f ? customDamage : hitTimePenalty;
-        if (TimeManager.Instance != null) TimeManager.Instance.SubtractTime(damageToApply);
+        float timeLost = TimeManager.Instance != null
+            ? TimeManager.Instance.SubtractTime(damageToApply)
+            : damageToApply;
+        DamageNumbersManager.Instance?.SpawnPlayerDamage(transform.position, timeLost);
         DamageTakenCount++;
         movement.TriggerHitInvulnerability();
 

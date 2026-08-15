@@ -29,6 +29,9 @@ public class UpgradeManager : MonoBehaviour
     public event Action OnUpgradeWindowClosed;
     public event Action<float> OnUpgradeTimerChanged;
 
+    public bool IsUpgradeWindowOpen => isWindowOpen;
+    public IReadOnlyList<UpgradeData> CurrentOptions => currentOptions;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)

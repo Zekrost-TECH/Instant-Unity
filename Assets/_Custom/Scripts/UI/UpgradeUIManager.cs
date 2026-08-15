@@ -15,6 +15,17 @@ public class UpgradeUIManager : MonoBehaviour
     public TextMeshProUGUI titleText;
 
     private List<UpgradeCardUI> activeCards = new List<UpgradeCardUI>();
+    private UpgradeResponsiveLayout responsiveLayout;
+    private bool subscribed;
+
+    private void Awake()
+    {
+        responsiveLayout = GetComponent<UpgradeResponsiveLayout>();
+        if (responsiveLayout == null)
+            responsiveLayout = gameObject.AddComponent<UpgradeResponsiveLayout>();
+
+        responsiveLayout.Configure(upgradeCanvasPanel, cardsContainer, titleText, progressBarContainer);
+    }
 
     private void Start()
     {
@@ -26,21 +37,40 @@ public class UpgradeUIManager : MonoBehaviour
         if (progressBarContainer != null)
             progressBarContainer.SetActive(false);
 
-        if (UpgradeManager.Instance != null)
+        TrySubscribe();
+    }
+
+    private void Update()
+    {
+        TrySubscribe();
+
+        if (subscribed && UpgradeManager.Instance != null &&
+            UpgradeManager.Instance.IsUpgradeWindowOpen &&
+            upgradeCanvasPanel != null && !upgradeCanvasPanel.activeSelf &&
+            UpgradeManager.Instance.CurrentOptions.Count > 0)
         {
-            UpgradeManager.Instance.OnUpgradeWindowOpened += HandleUpgradeWindowOpened;
-            UpgradeManager.Instance.OnUpgradeWindowClosed += HandleUpgradeWindowClosed;
-            UpgradeManager.Instance.OnUpgradeTimerChanged += HandleUpgradeTimerChanged;
+            HandleUpgradeWindowOpened(new List<UpgradeData>(UpgradeManager.Instance.CurrentOptions));
         }
+    }
+
+    private void TrySubscribe()
+    {
+        if (subscribed || UpgradeManager.Instance == null) return;
+
+        UpgradeManager.Instance.OnUpgradeWindowOpened += HandleUpgradeWindowOpened;
+        UpgradeManager.Instance.OnUpgradeWindowClosed += HandleUpgradeWindowClosed;
+        UpgradeManager.Instance.OnUpgradeTimerChanged += HandleUpgradeTimerChanged;
+        subscribed = true;
     }
 
     private void OnDestroy()
     {
-        if (UpgradeManager.Instance != null)
+        if (subscribed && UpgradeManager.Instance != null)
         {
             UpgradeManager.Instance.OnUpgradeWindowOpened -= HandleUpgradeWindowOpened;
             UpgradeManager.Instance.OnUpgradeWindowClosed -= HandleUpgradeWindowClosed;
             UpgradeManager.Instance.OnUpgradeTimerChanged -= HandleUpgradeTimerChanged;
+            subscribed = false;
         }
     }
 
@@ -77,6 +107,8 @@ public class UpgradeUIManager : MonoBehaviour
 
             delay += 0.25f; // Retraso escalonado entre cada carta
         }
+
+        responsiveLayout?.Refresh(activeCards);
     }
 
     private void HandleUpgradeWindowClosed()

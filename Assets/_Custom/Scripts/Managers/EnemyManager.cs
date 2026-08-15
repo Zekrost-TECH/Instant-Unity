@@ -204,7 +204,7 @@ public class EnemyManager : MonoBehaviour
             {
                 nearestBuffer.Insert(insertIndex, enemy);
             }
-            else if (insertIndex < count - 1)
+            else if (insertIndex < count)
             {
                 nearestBuffer.RemoveAt(count - 1);
                 nearestBuffer.Insert(insertIndex, enemy);

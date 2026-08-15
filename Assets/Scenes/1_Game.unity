@@ -249,7 +249,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0.5
+  m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -730,23 +730,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 371724350}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GridLayoutGroup
   m_Padding:
     m_Left: 0
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 4
-  m_Spacing: 40
-  m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 0
-  m_ChildControlWidth: 1
-  m_ChildControlHeight: 1
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
+  m_ChildAlignment: 0
+  m_StartCorner: 0
+  m_StartAxis: 0
+  m_CellSize: {x: 100, y: 100}
+  m_Spacing: {x: 0, y: 0}
+  m_Constraint: 0
+  m_ConstraintCount: 2
 --- !u!1 &388097951
 GameObject:
   m_ObjectHideFlags: 0
@@ -4955,6 +4953,7 @@ GameObject:
   - component: {fileID: 1732460718}
   - component: {fileID: 1732460719}
   - component: {fileID: 1732460720}
+  - component: {fileID: 1732460721}
   m_Layer: 0
   m_Name: Managers
   m_TagString: Untagged
@@ -4990,6 +4989,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   gameSceneName: 1_Game
   mainMenuSceneName: 0_MainMenu
+  reviveGraceDuration: 3
+  reviveClearRadius: 7
 --- !u!4 &1732460708
 Transform:
   m_ObjectHideFlags: 0
@@ -5273,6 +5274,32 @@ MonoBehaviour:
   invulnerabilityDuration: 4
   poolCapacity: 16
   poolMaxSize: 48
+--- !u!114 &1732460721
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1732460705}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5285fa3e9825d804f917668dc2028f0c, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DamageNumbersManager
+  enemyDamagePrefab: {fileID: 2591646504292624505, guid: 8b1edf8fbe05eb34183eaaa8b4d5a642, type: 3}
+  playerDamagePrefab: {fileID: 2591646504292624505, guid: 9ebafb5f6b85e9944b25da3812e77a4f, type: 3}
+  worldPopupParent: {fileID: 131383877}
+  enemyDamageOffset: {x: 0, y: 0.45, z: -1}
+  playerDamageOffset: {x: 0, y: 0.7, z: -1}
+  enemyDamageColor: {r: 1, g: 0.9, b: 0.25, a: 1}
+  playerDamageColor: {r: 1, g: 0.2, b: 0.2, a: 1}
+  timeChangePrefab: {fileID: 2591646504292624505, guid: 86dae20d57321854b810d553ddab445b, type: 3}
+  timePopupParent: {fileID: 131383877}
+  timePopupAnchor: {fileID: 5323780}
+  timePopupOffset: {x: 0, y: -150}
+  timePopupScale: 0.85
+  timeGainColor: {r: 0.2, g: 1, b: 0.45, a: 1}
+  timeLossColor: {r: 1, g: 0.2, b: 0.2, a: 1}
 --- !u!1 &1744461811
 GameObject:
   m_ObjectHideFlags: 0

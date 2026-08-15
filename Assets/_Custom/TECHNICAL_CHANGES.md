@@ -12,7 +12,7 @@
 
 Se implementó en código la mayoría de los elementos faltantes del documento de diseño para cumplir con las fases 2, 3 y 4 del proyecto:
 
-- **Fase 2 (Game feel y gameplay completo):** partículas, hit flash, glow de élite, reloj pulsante, dash trail, ventana de upgrade con pausa parcial y timeout.
+- **Fase 2 (Game feel y gameplay completo):** partículas, hit flash, glow de élite, reloj pulsante, dash trail, Damage Numbers Pro, ventana de upgrade con pausa parcial y timeout.
 - **Fase 3 (Progresión y persistencia):** SkinManager, SkinRenderer, onboarding con tooltips, HapticManager.
 - **Fase 4 (Monetización):** AdsManager con stub de Editor y AdMob para anuncios recompensados, pantalla de Game Over con botón de anuncio.
 
@@ -51,14 +51,14 @@ El código compila sin errores. Persisten conexiones de HUD, audio secundario, p
 **Cambios:**
 
 - Se añadió `KillsSinceLastUpgrade` para contar kills desde el último upgrade.
-- Se añadió evento `OnKillsThresholdReached` que se dispara cada 20 kills.
+- Se añadió evento `OnKillsThresholdReached` que se dispara al alcanzar el umbral dinámico de kills (10 al inicio, +4 por ventana hasta un máximo de 38).
 - Se añadieron `ResetKillCount()` y `ResetKillsSinceLastUpgrade()`.
 
 ### 2.4 UpgradeManager.cs
 
 **Cambios:**
 
-- Se implementó upgrade común cada 20 kills (escucha `EnemyManager.OnKillsThresholdReached`).
+- Se implementó upgrade común al alcanzar el umbral dinámico de kills (escucha `EnemyManager.OnKillsThresholdReached`).
 - Se implementó upgrade raro garantizado al matar élite (escucha `EnemyManager.OnEnemyKilled` con `isElite`).
 - La ventana de upgrade ahora usa pausa parcial (`TimeManager.SetDrainMultiplier(0.2f)`).
 - Se añadió timeout de 8 segundos con barra de progreso (`OnUpgradeTimerChanged`).
@@ -155,6 +155,13 @@ El código compila sin errores. Persisten conexiones de HUD, audio secundario, p
 **Estado:**
 
 - Los prefabs de muerte, ganancia de tiempo y trail de dash están creados y asignados.
+
+### 3.6 DamageNumbersManager.cs
+
+- Usa `DamageNumberGUI` en coordenadas de pantalla para el daño jugador→enemigo y enemigo→jugador, convertido desde la posición del mundo por la cámara 2D.
+- Usa `DamageNumberGUI` para mostrar cada ajuste explícito del reloj junto al HUD.
+- Configura pooling y prewarm de las variantes propias sin modificar el contenido del asset.
+- Escucha `TimeManager.OnTimeAdjusted` para mostrar el delta efectivo después del clamp.
 
 ---
 
@@ -286,6 +293,7 @@ Assets/_Custom/
 │   │   ├── AdsManager.cs
 │   │   ├── HapticManager.cs
 │   │   ├── SkinManager.cs
+│   │   ├── DamageNumbersManager.cs
 │   │   └── BootstrapInitializer.cs
 │   ├── Rendering/
 │   │   ├── GeometryRenderer.cs

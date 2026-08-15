@@ -15,6 +15,7 @@ Añade los siguientes componentes a objetos en la escena `1_Game` (o deja que `B
 - `AdsManager` se crea al necesitar el revive; en Editor usa stub y en dispositivo usa AdMob.
 - `HapticManager`
 - `ParticleManager` (asignar prefabs de partículas de muerte, tiempo ganado y dash trail)
+- `DamageNumbersManager` (asignar `enemyDamagePrefab`, `playerDamagePrefab`, `worldPopupParent` y `timePopupParent` al `GameStatus-Canvas`, y `timePopupAnchor` al `Time-Bar-Background`)
 - `BootstrapInitializer` (opcional, para crear managers automáticamente)
 
 ## UI a conectar en la escena de juego
@@ -57,3 +58,6 @@ Prefabs ya creados y asignados:
 - `timeGainParticlePrefab`: `Assets/_Custom/Prefabs/VFX/TimeGainParticle.prefab`.
 - `dashTrailPrefab`: `Assets/_Custom/Prefabs/VFX/DashTrail.prefab`.
 - `projectilePrefab`: `Assets/_Custom/Prefabs/Combat/EnemyProjectile.prefab`.
+- `DamageNumbersManager.enemyDamagePrefab`: `Assets/_Custom/Prefabs/Feedback/DamageNumbers/PlayerAttackDamageGUI.prefab`.
+- `DamageNumbersManager.playerDamagePrefab`: `Assets/_Custom/Prefabs/Feedback/DamageNumbers/PlayerHitDamageGUI.prefab`.
+- `DamageNumbersManager.timeChangePrefab`: `Assets/_Custom/Prefabs/Feedback/DamageNumbers/TimeChangeRed.prefab`.

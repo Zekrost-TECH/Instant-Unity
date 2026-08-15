@@ -3,7 +3,7 @@
 ## Project at a glance
 
 - **Engine**: Unity `6000.4.2f1` (Unity 6), URP 2D (`com.unity.render-pipelines.universal` 17.3.0), `URP2DSceneTemplate` is the scene template.
-- **Genre**: Top-down 2D mobile arena survivor ("Instant"). Timer drains; kills add time; every 20 kills a common upgrade window opens; killing an elite guarantees a rare upgrade. See `Assets/_Custom/TECHNICAL_CHANGES.md` for the full design recap.
+- **Genre**: Top-down 2D mobile arena survivor ("Instant"). Timer drains; kills add time; the common upgrade threshold starts at 10 kills and grows dynamically to 38; killing an elite guarantees a rare upgrade. See `Assets/_Custom/TECHNICAL_CHANGES.md` for the full design recap.
 - **Platform target**: Mobile (touch joystick + dash button UI, `Handheld.Vibrate()`, NiceVibrations, HapticManager). `NiceVibrations` and `Lofelt.NiceVibrations` packages are present.
 - **Remote**: `https://github.com/Zekrost-TECH/Instant-Unity.git`.
 

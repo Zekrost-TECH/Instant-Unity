@@ -18,6 +18,7 @@ public class BootstrapInitializer : MonoBehaviour
     public GameObject particleManagerPrefab;
     public GameObject hitVfxManagerPrefab;
     public GameObject pickupManagerPrefab;
+    public GameObject damageNumbersManagerPrefab;
 
     [Header("Scenes")]
     public string mainMenuSceneName = "0_MainMenu";
@@ -40,6 +41,7 @@ public class BootstrapInitializer : MonoBehaviour
         EnsureManager(ref particleManagerPrefab, "ParticleManager");
         EnsureManager(ref hitVfxManagerPrefab, "HitVFXManager");
         EnsureManager(ref pickupManagerPrefab, "PickupManager");
+        EnsureManager(ref damageNumbersManagerPrefab, "DamageNumbersManager");
     }
 
     private void Start()
@@ -88,6 +90,7 @@ public class BootstrapInitializer : MonoBehaviour
             case "ParticleManager": return FindAnyObjectByType<ParticleManager>() != null;
             case "HitVFXManager": return FindAnyObjectByType<HitVFXManager>() != null;
             case "PickupManager": return FindAnyObjectByType<PickupManager>() != null;
+            case "DamageNumbersManager": return FindAnyObjectByType<DamageNumbersManager>() != null;
             default: return false;
         }
     }
@@ -110,6 +113,7 @@ public class BootstrapInitializer : MonoBehaviour
             case "ParticleManager": obj.AddComponent<ParticleManager>(); break;
             case "HitVFXManager": obj.AddComponent<HitVFXManager>(); break;
             case "PickupManager": obj.AddComponent<PickupManager>(); break;
+            case "DamageNumbersManager": obj.AddComponent<DamageNumbersManager>(); break;
         }
     }
 }

@@ -16,8 +16,8 @@ public class SaveManager : MonoBehaviour
 
     [Header("Passive Upgrades")]
     public int StartingTimeLevel { get; private set; } = 0; // Max 5 (+2s per level)
-    public int AttackRangeLevel { get; private set; } = 0;  // Max 5 (+5% range per level)
-    public int DashCooldownLevel { get; private set; } = 0; // Max 5 (-8% cooldown per level)
+    public int AttackRangeLevel { get; private set; } = 0;  // Max 5 (+7% range per level)
+    public int DashCooldownLevel { get; private set; } = 0; // Max 5 (-6% cooldown per level)
 
     [Header("Skins")]
     public string EquippedSkin { get; private set; } = "Cyan";

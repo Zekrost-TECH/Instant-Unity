@@ -19,6 +19,7 @@ public class TimeManager : MonoBehaviour
     private bool timeOutNotified = false;
 
     public event Action<float> OnTimeChanged;
+    public event Action<float> OnTimeAdjusted;
     public event Action OnTimeCritical;
     public event Action OnTimeCriticalEnded;
     public event Action OnTimeOut;
@@ -124,34 +125,50 @@ public class TimeManager : MonoBehaviour
         }
     }
 
-    public void AddTime(float amount)
+    public float AddTime(float amount)
     {
         float previousTime = CurrentTime;
         CurrentTime += amount;
         CurrentTime = Mathf.Clamp(CurrentTime, 0f, TIME_MAX);
-        TimeGainedThisRun += Mathf.Max(0f, CurrentTime - previousTime);
+        float timeGained = CurrentTime - previousTime;
+
+        TimeGainedThisRun += Mathf.Max(0f, timeGained);
         OnTimeChanged?.Invoke(CurrentTime);
+        if (timeGained > 0f)
+            OnTimeAdjusted?.Invoke(timeGained);
         UpdateTimeColorState();
+        return timeGained;
     }
 
     /// <summary>Deja el reloj al máximo. Lo usa el revivir por anuncio.</summary>
     public void FillToMax()
     {
+        float previousTime = CurrentTime;
         CurrentTime = TIME_MAX;
+        float timeGained = CurrentTime - previousTime;
+
         criticalStateNotified = false;
         nextBeepTime = 0f;
         OnTimeChanged?.Invoke(CurrentTime);
+        if (timeGained > 0f)
+            OnTimeAdjusted?.Invoke(timeGained);
         OnTimeCriticalEnded?.Invoke();
         UpdateTimeColorState();
     }
 
-    public void SubtractTime(float amount)
+    public float SubtractTime(float amount)
     {
+        float previousTime = CurrentTime;
         CurrentTime -= amount;
         CurrentTime = Mathf.Clamp(CurrentTime, 0f, TIME_MAX);
+        float timeLost = previousTime - CurrentTime;
+
         OnTimeChanged?.Invoke(CurrentTime);
+        if (timeLost > 0f)
+            OnTimeAdjusted?.Invoke(-timeLost);
         UpdateTimeColorState();
         CheckGameOverCondition();
+        return timeLost;
     }
 
     public void SetDrainMultiplier(float multiplier)

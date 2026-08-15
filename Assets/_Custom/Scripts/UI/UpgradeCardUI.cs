@@ -69,38 +69,53 @@ public class UpgradeCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         StartCoroutine(EntryAnimation(delayBeforeEntry));
     }
 
+    public void ApplyResponsiveSizing(Vector2 size, float canvasScale)
+    {
+        LayoutElement layout = GetComponent<LayoutElement>();
+        if (layout != null)
+        {
+            layout.preferredWidth = size.x;
+            layout.preferredHeight = size.y;
+            layout.minWidth = size.x;
+            layout.minHeight = size.y;
+        }
+
+        float safeScale = Mathf.Max(0.01f, canvasScale);
+        float titleMinimum = Mathf.Clamp(18f / safeScale, 28f, 52f);
+        float descriptionMinimum = Mathf.Clamp(14f / safeScale, 22f, 42f);
+
+        if (titleText != null)
+        {
+            titleText.enableAutoSizing = true;
+            titleText.fontSizeMin = titleMinimum;
+            titleText.fontSizeMax = titleMinimum * 1.25f;
+            titleText.maxVisibleLines = 1;
+            titleText.textWrappingMode = TextWrappingModes.NoWrap;
+            titleText.overflowMode = TextOverflowModes.Ellipsis;
+        }
+
+        if (descriptionText != null)
+        {
+            descriptionText.enableAutoSizing = true;
+            descriptionText.fontSizeMin = descriptionMinimum;
+            descriptionText.fontSizeMax = descriptionMinimum * 1.15f;
+            descriptionText.maxVisibleLines = 2;
+            descriptionText.textWrappingMode = TextWrappingModes.Normal;
+            descriptionText.overflowMode = TextOverflowModes.Ellipsis;
+        }
+
+        if (iconImage != null)
+            iconImage.preserveAspect = true;
+    }
+
     private IEnumerator EntryAnimation(float delay)
     {
         yield return new WaitForSecondsRealtime(delay);
 
-        // 1. Slide In Animation
-        Vector2 endPos = rectTransform.anchoredPosition;
-        // Iniciar fuera de la pantalla (a la derecha), en unidades del canvas de referencia.
-        // Usar Screen.width (píxeles físicos) era incorrecto: el CanvasScaler escala el
-        // rect a 1920x1080 de referencia, así que en la mayoría de dispositivos la carta
-        // partía desde una distancia arbitraria (a veces ya dentro de pantalla).
-        RectTransform canvasRect = rectTransform.root as RectTransform;
-        float canvasWidth = canvasRect != null ? canvasRect.rect.width : 1920f;
-        Vector2 startPos = new Vector2(canvasWidth + rectTransform.rect.width, endPos.y);
-        
-        rectTransform.anchoredPosition = startPos;
-        float duration = 0.5f;
-        float elapsed = 0f;
-        
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlaySFX(AudioManager.Instance.upgradeSelectSFX, 0.5f);
         }
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float t = elapsed / duration;
-            t = 1f - Mathf.Pow(1f - t, 3f); // Ease out cubic
-            rectTransform.anchoredPosition = Vector2.Lerp(startPos, endPos, t);
-            yield return null;
-        }
-        rectTransform.anchoredPosition = endPos;
 
         // 2. Delay Extra si es Rara (Genera anticipación)
         if (assignedUpgrade.isRare)
@@ -113,8 +128,8 @@ public class UpgradeCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         }
 
         // 3. Flip Animation (Mitad 1: rotar a 90 grados en Y)
-        duration = 0.3f;
-        elapsed = 0f;
+        float duration = 0.3f;
+        float elapsed = 0f;
         while (elapsed < duration)
         {
             elapsed += Time.unscaledDeltaTime;

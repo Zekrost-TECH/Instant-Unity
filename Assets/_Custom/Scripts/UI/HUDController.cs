@@ -42,6 +42,15 @@ public class HUDController : MonoBehaviour
         }
 
         UpdateTimeColor(TimeManager.TimeColorState.Calm);
+
+        if (GameManager.Instance != null)
+            HandleGameStateChanged(GameManager.Instance.CurrentState);
+
+        if (TimeManager.Instance != null)
+            UpdateTimer(TimeManager.Instance.CurrentTime);
+
+        if (EnemyManager.Instance != null)
+            UpdateKillCount(EnemyManager.Instance.KillCount);
     }
 
     private void OnDestroy()
