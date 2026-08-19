@@ -224,8 +224,10 @@ public class GameManager : MonoBehaviour
         {
             PlayerMovement movement = playerObj.GetComponent<PlayerMovement>();
             PlayerCombat combat = playerObj.GetComponent<PlayerCombat>();
+            PlayerPowerupVFX powerupVFX = playerObj.GetComponentInChildren<PlayerPowerupVFX>();
             if (movement != null) movement.ResetState();
             if (combat != null) combat.ResetState();
+            if (powerupVFX != null) powerupVFX.ResetState();
         }
 
         TimeManager.Instance?.ResetTime();

@@ -1,14 +1,19 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using MoreMountains.Tools;
 
 public class DashButtonController : MonoBehaviour
 {
     [Header("Visuals")]
     public Image cooldownRing;
     public Image buttonImage;
+    public Image dashIcon;
     public Color readyColor = Color.blue;
     public Color cooldownColor = Color.gray;
+
+    [Header("Binding")]
+    public MMTouchButton touchButton;
 
     [Header("Events")]
     public UnityEvent OnDashRequested;
@@ -49,10 +54,26 @@ public class DashButtonController : MonoBehaviour
             cooldownRing.fillAmount = cooldownRatio;
         }
 
-        if (buttonImage != null && wasReady != lastReadyState)
+        if (wasReady != lastReadyState)
         {
             lastReadyState = wasReady;
-            buttonImage.color = wasReady ? readyColor : cooldownColor;
+
+            if (buttonImage != null)
+                buttonImage.color = wasReady ? readyColor : cooldownColor;
+
+            // MMTouchButton sólo puede recibir taps cuando está listo (Off/ButtonUp).
+            if (touchButton != null)
+            {
+                if (wasReady) touchButton.EnableButton();
+                else touchButton.DisableButton();
+            }
+
+            if (dashIcon != null)
+            {
+                Color iconColor = dashIcon.color;
+                iconColor.a = wasReady ? 1f : 0.45f;
+                dashIcon.color = iconColor;
+            }
         }
 
         if (wasReady && !tooltipShown && tooltipController != null)
@@ -64,6 +85,10 @@ public class DashButtonController : MonoBehaviour
 
     public void OnDashButtonPressed()
     {
+        // El botón no debe ejecutar dashes mientras el cooldown no ha terminado.
+        if (playerMovement != null && playerMovement.DashCooldownRemaining > 0f)
+            return;
+
         OnDashRequested?.Invoke();
         playerInput?.TriggerDash();
     }

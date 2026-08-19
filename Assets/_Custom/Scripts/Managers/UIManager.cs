@@ -10,7 +10,7 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI killCountText;
 
     private const string killsLabel = "Kills: {0}";
-    private int lastDisplayedSeconds = int.MinValue;
+    private int lastDisplayedTenths = int.MinValue;
 
     private void Awake()
     {
@@ -56,12 +56,14 @@ public class UIManager : MonoBehaviour
     {
         if (timeText == null) return;
 
-        // OnTimeChanged se dispara cada frame: sólo tocamos el TMP cuando el segundo cambia.
-        int seconds = Mathf.CeilToInt(time);
-        if (seconds == lastDisplayedSeconds) return;
+        // OnTimeChanged se dispara cada frame: sólo tocamos el TMP cuando la décima cambia.
+        int tenths = Mathf.CeilToInt(time * 10f);
+        if (tenths == lastDisplayedTenths) return;
 
-        lastDisplayedSeconds = seconds;
-        timeText.SetText(NumberStrings.Get(seconds));
+        lastDisplayedTenths = tenths;
+        int whole = tenths / 10;
+        int frac = tenths % 10;
+        timeText.SetText(NumberStrings.Get(whole) + "." + NumberStrings.Get(frac));
     }
 
     public void UpdateKillCount(int kills)

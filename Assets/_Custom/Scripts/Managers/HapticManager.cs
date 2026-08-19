@@ -39,6 +39,12 @@ public class HapticManager : MonoBehaviour
         Vibrate(30);
     }
 
+    public void TriggerDash()
+    {
+        if (!IsEnabled()) return;
+        Vibrate(20);
+    }
+
     private bool IsEnabled()
     {
         if (SaveManager.Instance != null)

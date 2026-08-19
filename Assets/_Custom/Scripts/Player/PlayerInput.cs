@@ -1,13 +1,12 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using MoreMountains.Tools;
 
 public class PlayerInput : MonoBehaviour
 {
     private InputSystem_Actions inputActions;
     private JoystickController joystick;
-    private MMTouchJoystick feelJoystick;
+    private FloatingJoystickController floatingJoystick;
 
     public Vector2 MoveInput { get; private set; }
     public event Action OnDashPressed;
@@ -20,7 +19,7 @@ public class PlayerInput : MonoBehaviour
     private void Start()
     {
         joystick = FindAnyObjectByType<JoystickController>();
-        feelJoystick = FindAnyObjectByType<MMTouchJoystick>();
+        floatingJoystick = FindAnyObjectByType<FloatingJoystickController>();
     }
 
     private void OnEnable()
@@ -52,14 +51,15 @@ public class PlayerInput : MonoBehaviour
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
         {
             MoveInput = Vector2.zero;
+            floatingJoystick?.ResetJoystick();
             return;
         }
 
         Vector2 systemInput = inputActions.Player.Move.ReadValue<Vector2>();
 
-        // El joystick táctil de Feel manda si se está usando. NormalizedValue basta:
-        // PlayerMovement normaliza MoveInput, así que la magnitud analógica da igual.
-        Vector2 touchInput = feelJoystick != null ? feelJoystick.NormalizedValue : Vector2.zero;
+        // Dead zone sobre RawValue (analógico) y normalización.
+        Vector2 raw = floatingJoystick != null ? floatingJoystick.RawValue : Vector2.zero;
+        Vector2 touchInput = raw.sqrMagnitude > 0.01f ? raw.normalized : Vector2.zero;
 
         if (touchInput.sqrMagnitude <= 0.01f && joystick != null)
             touchInput = joystick.InputDirection;

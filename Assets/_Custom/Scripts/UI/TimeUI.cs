@@ -8,7 +8,7 @@ public class TimeUI : MonoBehaviour
     [SerializeField] private Color dangerColor = new Color(1f, 0.2f, 0.2f);
 
     private TextMeshProUGUI timeText;
-    private int lastDisplayedSeconds = int.MinValue;
+    private int lastDisplayedTenths = int.MinValue;
 
     private void Awake()
     {
@@ -33,13 +33,15 @@ public class TimeUI : MonoBehaviour
     {
         if (TimeManager.Instance == null || timeText == null) return;
 
-        // Mostramos el tiempo sin decimales, redondeándolo hacia arriba.
-        // Sólo escribimos en el TMP cuando el segundo cambia (evita rebuilds y allocs por frame).
-        int seconds = Mathf.CeilToInt(TimeManager.Instance.CurrentTime);
-        if (seconds == lastDisplayedSeconds) return;
+        // Mostramos el tiempo con un decimal, redondeándolo hacia arriba.
+        // Sólo escribimos en el TMP cuando la décima cambia (evita rebuilds y allocs por frame).
+        int tenths = Mathf.CeilToInt(TimeManager.Instance.CurrentTime * 10f);
+        if (tenths == lastDisplayedTenths) return;
 
-        lastDisplayedSeconds = seconds;
-        timeText.SetText(NumberStrings.Get(seconds));
+        lastDisplayedTenths = tenths;
+        int whole = tenths / 10;
+        int frac = tenths % 10;
+        timeText.SetText(NumberStrings.Get(whole) + "." + NumberStrings.Get(frac));
     }
 
     private void UpdateColor(TimeManager.TimeColorState state)

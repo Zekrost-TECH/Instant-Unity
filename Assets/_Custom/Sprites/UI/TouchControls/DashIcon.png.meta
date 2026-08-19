@@ -1,10 +1,16 @@
 fileFormatVersion: 2
-guid: c88fae31599579f4a85c8f533a45077a
+guid: d962b49569cc1514082f898c116b8a4c
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -6170406067372769598
-    second: DashButton_0
+      213: -5353812092960651861
+    second: DashIcon_0
+  - first:
+      213: -8078621363277735237
+    second: DashIcon_1
+  - first:
+      213: 7050617578809301803
+    second: DashIcon_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -72,7 +78,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 2048
+    maxTextureSize: 512
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 0
@@ -98,14 +104,14 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
     buildTarget: Android
-    maxTextureSize: 2048
+    maxTextureSize: 512
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
-    overridden: 0
+    overridden: 1
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
@@ -126,13 +132,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: DashButton_0
+      name: DashIcon_0
       rect:
         serializedVersion: 2
-        x: 255
-        y: 255
-        width: 514
-        height: 514
+        x: 42
+        y: 226
+        width: 116
+        height: 60
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -141,8 +147,52 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2ceb45abf505e5aa0800000000000000
-      internalID: -6170406067372769598
+      spriteID: ba5c3e4644073b5b0800000000000000
+      internalID: -5353812092960651861
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DashIcon_1
+      rect:
+        serializedVersion: 2
+        x: 106
+        y: 157
+        width: 116
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bbad2f62ca8f2ef80800000000000000
+      internalID: -8078621363277735237
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DashIcon_2
+      rect:
+        serializedVersion: 2
+        x: 177
+        y: 120
+        width: 158
+        height: 272
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2b9d080553d8d160800000000000000
+      internalID: 7050617578809301803
       vertices: []
       indices: 
       edges: []
@@ -161,7 +211,9 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      DashButton_0: -6170406067372769598
+      DashIcon_0: -5353812092960651861
+      DashIcon_1: -8078621363277735237
+      DashIcon_2: 7050617578809301803
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

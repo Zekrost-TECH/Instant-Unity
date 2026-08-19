@@ -242,6 +242,8 @@ public class PlayerMovement : MonoBehaviour
             if (AudioManager.Instance != null)
                 AudioManager.Instance.PlaySFX(AudioManager.Instance.playerDashSFX, 0.8f);
 
+            HapticManager.Instance?.TriggerDash();
+
             if (ParticleManager.Instance != null)
                 ParticleManager.Instance.SpawnDashTrail(transform.position, dashDirection);
 

@@ -19,7 +19,7 @@ public class HUDController : MonoBehaviour
     private const string KillsLabel = "Kills: {0}";
     private const string CronosLabel = "Cronos: {0}";
 
-    private int lastDisplayedSeconds = int.MinValue;
+    private int lastDisplayedTenths = int.MinValue;
     private int lastDisplayedRunCronos = int.MinValue;
     private float lastBarFill = -1f;
 
@@ -83,11 +83,13 @@ public class HUDController : MonoBehaviour
     private void UpdateTimer(float time)
     {
         // OnTimeChanged llega cada frame: sólo tocamos los widgets cuando su valor visible cambia.
-        int seconds = Mathf.CeilToInt(time);
-        if (timeText != null && seconds != lastDisplayedSeconds)
+        int tenths = Mathf.CeilToInt(time * 10f);
+        if (timeText != null && tenths != lastDisplayedTenths)
         {
-            lastDisplayedSeconds = seconds;
-            timeText.SetText(NumberStrings.Get(seconds));
+            lastDisplayedTenths = tenths;
+            int whole = tenths / 10;
+            int frac = tenths % 10;
+            timeText.SetText(NumberStrings.Get(whole) + "." + NumberStrings.Get(frac));
         }
 
         if (timeBar != null)

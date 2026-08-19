@@ -41,6 +41,7 @@ public class PickupManager : MonoBehaviour
 
     private PlayerMovement cachedMovement;
     private PlayerCombat cachedCombat;
+    private PlayerPowerupVFX cachedPowerupVFX;
 
     private const string DontDestroyOnLoadScene = "DontDestroyOnLoad";
     private const string PickupFontPath = "Fonts & Materials/LiberationSans SDF";
@@ -248,6 +249,12 @@ public class PickupManager : MonoBehaviour
         SpawnFloatingText(position, GetLabel(pickup.Type), color);
 
         ApplyEffect(pickup.Type);
+
+        // Feedback neón sobre el jugador (burst + señal persistente en buffs temporales)
+        if (cachedPowerupVFX == null) EnsurePlayerRefs();
+        if (cachedPowerupVFX != null)
+            cachedPowerupVFX.Play(pickup.Type, GetVisual(pickup.Type).color, GetEffectDuration(pickup.Type));
+
         AudioManager.Instance?.PlayPickupSFX();
         HapticManager.Instance?.TriggerPickup();
         Recycle(pickup);
@@ -307,13 +314,26 @@ public class PickupManager : MonoBehaviour
 
     private void EnsurePlayerRefs()
     {
-        if (cachedMovement != null && cachedCombat != null) return;
+        if (cachedMovement != null && cachedCombat != null && cachedPowerupVFX != null) return;
 
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player == null) return;
 
         cachedMovement = player.GetComponent<PlayerMovement>();
         cachedCombat = player.GetComponent<PlayerCombat>();
+        cachedPowerupVFX = player.GetComponentInChildren<PlayerPowerupVFX>();
+    }
+
+    private float GetEffectDuration(ConsumableType type)
+    {
+        switch (type)
+        {
+            case ConsumableType.SpeedBoost: return speedBoostDuration;
+            case ConsumableType.AttackSpeedBoost: return attackSpeedDuration;
+            case ConsumableType.TripleShot: return tripleShotDuration;
+            case ConsumableType.Invulnerability: return invulnerabilityDuration;
+            default: return 0f;
+        }
     }
 
     public void Recycle(PickupBase pickup)
