@@ -1,6 +1,9 @@
 using UnityEngine;
 
-[RequireComponent(typeof(CircleCollider2D))]
+/// <summary>
+/// Zona muerta (upgrade raro): área naranja que deja el dash y daña a los enemigos
+/// que la pisan durante unos segundos. PlayerCombat las reutiliza, nunca se destruyen.
+/// </summary>
 public class ToxicZone : MonoBehaviour
 {
     [Header("Visuals")]
@@ -10,26 +13,48 @@ public class ToxicZone : MonoBehaviour
     public Color toxicColor = new Color(1f, 0.4f, 0f, 0.33f); // #FF660055
 
     [Header("Damage")]
-    public float timeDamagePerSecond = 2f;
+    [Tooltip("Cada cuánto (segundos) daña a los enemigos que estén dentro.")]
     public float damageInterval = 0.5f;
-    public float radius = 1.2f;
 
-    private float damageTimer = 0f;
-    private PlayerCombat playerCombat;
-    private Transform borderTransform;
+    // Radio en unidades de las figuras procedurales a escala 1 (26.5px a 100 ppu).
+    private const float SpriteRadius = 0.265f;
+    private const float FadeDuration = 0.3f;
 
-    private void Start()
+    private float radius;
+    private int damage;
+    private float lifeTimer;
+    private float damageTimer;
+
+    public static ToxicZone Create()
     {
-        transform.localScale = Vector3.one * radius * 2f;
+        GameObject go = new GameObject("DeadZone");
+        ToxicZone zone = go.AddComponent<ToxicZone>();
 
-        if (areaRenderer != null)
-            areaRenderer.color = toxicColor;
+        zone.areaRenderer = go.AddComponent<SpriteRenderer>();
+        zone.areaRenderer.sprite = ProceduralSprites.Get("disc");
+        zone.areaRenderer.sortingOrder = -3;
 
-        if (borderRenderer != null)
-        {
-            borderRenderer.color = new Color(toxicColor.r, toxicColor.g, toxicColor.b, 0.8f);
-            borderTransform = borderRenderer.transform;
-        }
+        GameObject border = new GameObject("Border");
+        border.transform.SetParent(go.transform, false);
+        zone.borderRenderer = border.AddComponent<SpriteRenderer>();
+        zone.borderRenderer.sprite = ProceduralSprites.Get("dashedcircle");
+        zone.borderRenderer.sortingOrder = -2;
+
+        go.SetActive(false);
+        return zone;
+    }
+
+    public void Activate(Vector3 position, float zoneRadius, int zoneDamage, float duration)
+    {
+        radius = zoneRadius;
+        damage = zoneDamage;
+        lifeTimer = duration;
+        damageTimer = 0f;
+
+        transform.position = position;
+        transform.localScale = Vector3.one * (zoneRadius / SpriteRadius);
+        SetAlpha(1f);
+        gameObject.SetActive(true);
     }
 
     private void Update()
@@ -37,37 +62,33 @@ public class ToxicZone : MonoBehaviour
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
             return;
 
-        if (borderTransform != null)
-            borderTransform.Rotate(0f, 0f, rotationSpeed * Time.deltaTime);
+        float deltaTime = Time.deltaTime;
 
-        damageTimer -= Time.deltaTime;
-        if (damageTimer <= 0f && playerCombat != null)
+        if (borderRenderer != null)
+            borderRenderer.transform.Rotate(0f, 0f, rotationSpeed * deltaTime);
+
+        damageTimer -= deltaTime;
+        if (damageTimer <= 0f)
         {
             damageTimer = damageInterval;
-            playerCombat.TakeDamageFromEnemy(timeDamagePerSecond * damageInterval);
+            EnemyManager.Instance?.DamageEnemiesInRadius(transform.position, radius, damage);
         }
+
+        lifeTimer -= deltaTime;
+        if (lifeTimer < FadeDuration) SetAlpha(Mathf.Clamp01(lifeTimer / FadeDuration));
+        if (lifeTimer <= 0f) gameObject.SetActive(false);
     }
 
-    private void OnDisable()
+    private void SetAlpha(float t)
     {
-        // Si la zona se desactiva mientras el jugador está dentro, OnTriggerExit2D no llega.
-        playerCombat = null;
-        damageTimer = 0f;
-    }
-
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        if (other.CompareTag("Player"))
+        if (areaRenderer != null)
         {
-            playerCombat = other.GetComponent<PlayerCombat>();
+            Color area = toxicColor;
+            area.a *= t;
+            areaRenderer.color = area;
         }
-    }
 
-    private void OnTriggerExit2D(Collider2D other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            playerCombat = null;
-        }
+        if (borderRenderer != null)
+            borderRenderer.color = new Color(toxicColor.r, toxicColor.g, toxicColor.b, 0.8f * t);
     }
 }

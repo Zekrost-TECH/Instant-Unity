@@ -2,7 +2,7 @@
 
 ## Managers nuevos a conectar en la escena de juego
 
-Añade los siguientes componentes a objetos en la escena `1_Game` (o deja que `BootstrapInitializer` los cree automáticamente):
+Añade los siguientes componentes al objeto `Managers` de la escena `1_Game`:
 
 - `GameManager`
 - `TimeManager`
@@ -16,7 +16,6 @@ Añade los siguientes componentes a objetos en la escena `1_Game` (o deja que `B
 - `HapticManager`
 - `ParticleManager` (asignar prefabs de partículas de muerte, tiempo ganado y dash trail)
 - `DamageNumbersManager` (asignar `enemyDamagePrefab`, `playerDamagePrefab`, `worldPopupParent` y `timePopupParent` al `GameStatus-Canvas`, y `timePopupAnchor` al `Time-Bar-Background`)
-- `BootstrapInitializer` (opcional, para crear managers automáticamente)
 
 ## UI a conectar en la escena de juego
 
@@ -26,10 +25,11 @@ Añade los siguientes componentes a objetos en la escena `1_Game` (o deja que `B
 - `TooltipController`: asignar `tooltipPanel`, `tooltipText`, `timeTextTarget`, `dashButtonTarget`.
 - `JoystickController`: asignar fondo y handle del joystick.
 - `DashButtonController`: asignar `cooldownRing`, `buttonImage`.
+- `ScreenShatter` (ya creado en `ScreenShatter-Canvas/Shatter-Glass`): cristal roto al derrotar al jefe. El canvas debe quedar por encima de todos (orden 100) y `crackLight` apunta a `Crack-Light`, la Image que va detrás.
 
 ## Player
 
-- Añadir `SkinRenderer` al jugador.
+- `PlayerDeathSequence` (ya añadido): zoom de cámara y explosión al morir, y la misma explosión al revés al revivir; necesita `shardSprite` (`PowerupShard`). El sonido de revivir es `AudioManager.reviveSFX` (`SoundFX/Boost1.wav`).
 - Asegurar que `PlayerInput` y `PlayerMovement` estén en el mismo objeto.
 - El `JoystickController` y `DashButtonController` se encuentran automáticamente.
 
@@ -50,6 +50,7 @@ Añade los siguientes componentes a objetos en la escena `1_Game` (o deja que `B
 - `enemyDeathSFX` usa `Assets/Feel/NiceVibrations/HapticSamples/Weapons/ScifiGunshot1.wav`.
 - También están asignados temporalmente `clockBeepSFX`, `timeGainSFX`, `upgradeMissedSFX`, música, tensión y dash desde NiceVibrations.
 - `AudioManager` ya aplica fade de música al 30% durante ventanas de upgrade.
+- Barrera rota: `barrierCrackSFX` usa `Impacts/BulletCrack1.wav` y `barrierShatterSFX` usa `Impacts/Glass2.wav`.
 
 ## Prefabs necesarios
 

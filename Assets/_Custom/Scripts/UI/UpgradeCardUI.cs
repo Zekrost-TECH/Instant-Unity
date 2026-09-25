@@ -20,7 +20,19 @@ public class UpgradeCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     public float maxTiltAngle = 15f;
     public float tiltSmoothness = 10f;
     public float hoverScale = 1.1f;
-    
+
+    [Header("Rarity Glow")]
+    [Tooltip("Halo detrás de la carta. Se enciende al girarla, con el color de su rareza (GDD).")]
+    public Image rarityGlow;
+    public Color commonGlowColor = new Color(0.3f, 0.65f, 1f, 1f);
+    public Color rareGlowColor = new Color(1f, 0.7f, 0.1f, 1f);
+    [Tooltip("Alfa mínimo y máximo del latido del halo.")]
+    public Vector2 glowAlphaRange = new Vector2(0.45f, 0.85f);
+    public float glowFadeInDuration = 0.25f;
+
+    private float glowReveal;
+    private bool glowRevealed;
+
     private RectTransform rectTransform;
     private Quaternion targetRotation;
     private Vector3 targetScale;
@@ -43,6 +55,8 @@ public class UpgradeCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     private void Update()
     {
+        UpdateGlow();
+
         if (isInteractable)
         {
             if (!isHovered)
@@ -63,7 +77,17 @@ public class UpgradeCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         if (titleText != null) titleText.text = upgrade.title;
         if (descriptionText != null) descriptionText.text = upgrade.description;
         if (iconImage != null && upgrade.icon != null) iconImage.sprite = upgrade.icon;
-        
+
+        glowReveal = 0f;
+        glowRevealed = false;
+        if (rarityGlow != null)
+        {
+            Color glow = upgrade.isRare ? rareGlowColor : commonGlowColor;
+            glow.a = 0f;
+            rarityGlow.color = glow;
+            rarityGlow.raycastTarget = false;
+        }
+
         isInteractable = false;
         
         StartCoroutine(EntryAnimation(delayBeforeEntry));
@@ -141,6 +165,7 @@ public class UpgradeCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         // Cambiar gráficos
         if (cardBack != null) cardBack.SetActive(false);
         if (cardFront != null) cardFront.SetActive(true);
+        glowRevealed = true;
 
         // 3. Flip Animation (Mitad 2: rotar de 90 a 0 grados)
         elapsed = 0f;
@@ -154,6 +179,24 @@ public class UpgradeCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         rectTransform.localRotation = Quaternion.identity;
         isInteractable = true;
+    }
+
+    /// <summary>
+    /// El halo aparece con la cara de la carta (la rareza no se revela antes del giro)
+    /// y late: más rápido en las raras, y al máximo mientras el dedo está encima.
+    /// </summary>
+    private void UpdateGlow()
+    {
+        if (rarityGlow == null || !glowRevealed || assignedUpgrade == null) return;
+
+        glowReveal = Mathf.Min(1f, glowReveal + Time.unscaledDeltaTime / Mathf.Max(0.01f, glowFadeInDuration));
+        float speed = assignedUpgrade.isRare ? 5f : 3f;
+        float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * speed);
+        float alpha = isHovered ? glowAlphaRange.y : Mathf.Lerp(glowAlphaRange.x, glowAlphaRange.y, pulse);
+
+        Color c = rarityGlow.color;
+        c.a = alpha * glowReveal;
+        rarityGlow.color = c;
     }
 
     public void OnPointerEnter(PointerEventData eventData)

@@ -88,7 +88,8 @@ public class UpgradeResponsiveLayout : MonoBehaviour
         Vector2 safeCenter = (safeMin + safeMax) * 0.5f;
         float spacing = Mathf.Clamp(Mathf.Min(safeWidth, safeHeight) * 0.025f, 18f, 42f);
         float titleHeight = Mathf.Clamp(safeHeight * 0.075f, 52f, 82f);
-        float topInset = Mathf.Clamp(safeHeight * 0.13f, 96f, 156f);
+        // Deja libre la franja superior: el reloj del HUD sigue visible (y drenando) sobre la ventana.
+        float topInset = Mathf.Clamp(safeHeight * 0.23f, 170f, 250f);
         float titleY = safeMax.y - topInset - titleHeight * 0.5f;
         float progressHeight = 22f;
         float progressY = titleY - titleHeight * 0.5f - 26f - progressHeight * 0.5f;

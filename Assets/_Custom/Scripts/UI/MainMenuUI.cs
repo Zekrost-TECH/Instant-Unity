@@ -30,6 +30,14 @@ public class MainMenuUI : MonoBehaviour
     [Tooltip("Cronos que regala DebugAddCronos(). Sólo para probar la tienda.")]
     public int debugCronosAmount = 100;
 
+    // El botón TIENDA del Game Over carga esta escena y pide abrir la tienda al llegar.
+    private static bool openShopOnLoad;
+
+    public static void RequestShopOnLoad()
+    {
+        openShopOnLoad = true;
+    }
+
     private void Awake()
     {
         // La escena 0_MainMenu no lleva managers: sin esto no hay Cronos ni skins.
@@ -47,6 +55,12 @@ public class MainMenuUI : MonoBehaviour
 
         ApplyEquippedSkin();
         UpdateDisplay();
+
+        if (openShopOnLoad)
+        {
+            openShopOnLoad = false;
+            OpenShop();
+        }
     }
 
     private void OnDestroy()

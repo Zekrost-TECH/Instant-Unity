@@ -20,8 +20,6 @@ public class DashButtonController : MonoBehaviour
 
     private PlayerMovement playerMovement;
     private PlayerInput playerInput;
-    private TooltipController tooltipController;
-    private bool tooltipShown = false;
     private float lastFill = -1f;
     private bool lastReadyState = false;
 
@@ -33,8 +31,6 @@ public class DashButtonController : MonoBehaviour
             playerMovement = player.GetComponent<PlayerMovement>();
             playerInput = player.GetComponent<PlayerInput>();
         }
-
-        tooltipController = FindAnyObjectByType<TooltipController>();
 
         if (cooldownRing != null)
             cooldownRing.fillAmount = 1f;
@@ -74,12 +70,6 @@ public class DashButtonController : MonoBehaviour
                 iconColor.a = wasReady ? 1f : 0.45f;
                 dashIcon.color = iconColor;
             }
-        }
-
-        if (wasReady && !tooltipShown && tooltipController != null)
-        {
-            tooltipController.ShowDashTooltip();
-            tooltipShown = true;
         }
     }
 

@@ -11,8 +11,8 @@
 
 - `Assets/Scenes/0_MainMenu.unity`, `Assets/Scenes/1_Game.unity` — the only two scenes.
 - `Assets/_Custom/Scripts/` — all hand-written gameplay code. Subfolders:
-  - `Managers/` — singletons (`GameManager`, `TimeManager`, `SpawnManager`, `EnemyManager`, `UpgradeManager`, `AudioManager`, `SaveManager`, `SkinManager`, `AdsManager`, `HapticManager`, `ParticleManager`, `UIManager`, `BootstrapInitializer`).
-  - `Player/`, `Enemies/`, `Upgrades/`, `UI/`, `Utils/`, `Rendering/`, `Interfaces/`.
+  - `Managers/` — singletons (`GameManager`, `TimeManager`, `SpawnManager`, `EnemyManager`, `UpgradeManager`, `AudioManager`, `SaveManager`, `SkinManager`, `AdsManager`, `HapticManager`, `DamageNumbersManager`, `PickupManager`). Most live on the `Managers` GameObject of `1_Game`.
+  - `Player/`, `Enemies/`, `Upgrades/`, `UI/`, `Utils/`, `Consumables/`, `Effects/`, `Skins/`, `Interfaces/`.
   - `INTEGRATION_NOTES.md` and `TECHNICAL_CHANGES.md` (Spanish) are the source of truth for what to wire in the Inspector.
 - `Assets/InputSystem_Actions.cs` + `.inputactions` — auto-generated from the `.inputactions` asset. Do not edit the `.cs` by hand.
 - `Assets/{Feel,Layer Lab,TextMesh Pro,Unity Local TTS,Settings}/` — third-party packages and URP assets. Treat as read-only.
@@ -34,9 +34,9 @@ There is **no CLI build, no test suite, no linter, no formatter, no CI, and no p
 - **No namespaces.** All gameplay classes are in the global namespace. Don't add a namespace to a new file.
 - **Singleton pattern**: `public class Foo : MonoBehaviour { public static Foo Instance { get; private set; } ... }` with a defensive `Awake` that destroys duplicates. Every manager follows this.
 - **Inter-manager communication**: plain C# `event Action` / `event Action<T>` declared on the source manager. Consumers `+=` in `Start`, never in `OnEnable` (subscription patterns vary — check the file). No `UnityEvent`, no message bus, no ScriptableObject channels.
-- **Object pooling**: `Utils/ObjectPooler<T>` wraps `UnityEngine.Pool.ObjectPool<T>`. Use it for enemies, projectiles, and particles — never `Instantiate`/`Destroy` inside a per-frame loop.
+- **Object pooling**: use `UnityEngine.Pool.ObjectPool<T>` directly (see `SpawnManager`, `ParticleManager`, `PickupManager`) for enemies, projectiles, and particles — never `Instantiate`/`Destroy` inside a per-frame loop.
 - **Persistence**: `PlayerPrefs` only (see `SaveManager.cs`). No file IO, no JSON, no SQLite.
-- **Scene flow**: `BootstrapInitializer` auto-creates any missing manager GameObject in `Awake` and calls `DontDestroyOnLoad`. It also loads `0_MainMenu` on `Start` if `loadMainMenuOnStart` is true. If you add a new manager, add a `case` to `BootstrapInitializer.AddManagerComponent` or it will be silently skipped.
+- **Scene flow**: gameplay managers are placed in `1_Game` (GameObject `Managers`). `SaveManager`, `SkinManager`, `AudioManager` and `AdsManager` expose a static `Ensure()` that creates them when missing (`0_MainMenu` has no managers). A new gameplay manager must be added to the `Managers` GameObject in `1_Game`.
 - **Game state machine**: `GameManager.GameState { Menu, Playing, Paused, Upgrade, GameOver }`. `Playing` is the only state where input and spawning fire. Many components early-out in `Update` based on this.
 - **Tag contract**: `GameManager`, `SpawnManager`, `EnemyBase`, `UpgradeEffects`, and `DashButtonController` call `GameObject.FindGameObjectWithTag("Player")`. The Player GameObject **must have the default Unity `Player` tag** (it is not a custom tag — `ProjectSettings/TagManager.asset` defines no custom tags). Layer 6 is `Enemigos` and is used by enemies.
 
@@ -59,15 +59,13 @@ There is **no CLI build, no test suite, no linter, no formatter, no CI, and no p
 
 ## Known stubs and TODOs (current state)
 
-- `AdsManager.cs` is a **stub** that fakes rewarded ads and grants 10–20 Cronos after 1s. `TECHNICAL_CHANGES.md` §8.8 says to replace it with LevelPlay or Unity Ads before publishing.
-- `BootstrapInitializer` will create empty `GameObject`s with bare components if no prefab is wired in the Inspector — the `UpgradeManager.commonUpgrades` / `rareUpgrades`, `AudioManager` clips, and `ParticleManager` prefabs remain unassigned. `INTEGRATION_NOTES.md` and `TECHNICAL_CHANGES.md` §8 list every Inspector slot to wire before a real playtest.
-- `ParticleManager` requires three prefabs (`deathParticlePrefab`, `timeGainParticlePrefab`, `dashTrailPrefab`) to be authored in the Editor.
+- `AdsManager.cs` integrates Google Mobile Ads (AdMob) with **test** ad units (plus a stub in the Editor that grants the reward after 1s). Set real unit IDs before publishing.
 - `EnemyBase.OnHit` / `EnemyVisualFeedback` are wired but the enemy prefabs may still need `EnemyVisualFeedback` added (the base adds it via `AddComponent` at runtime, so this is just a perf/inspection nit, not a blocker).
 - `Assets/Scenes/` has `0_MainMenu.unity` and `1_Game.unity`. Open them in the Editor to confirm the wiring referenced in `INTEGRATION_NOTES.md` before assuming the scene works as-is.
 
 ## Quick orientation map
 
-- App entry / loop: `GameManager.cs` (state machine) → `TimeManager` / `SpawnManager` / `EnemyManager` / `UpgradeManager` (gameplay loop) → `UIManager` / `HUDController` / `UpgradeUIManager` / `GameOverController` (UI).
+- App entry / loop: `GameManager.cs` (state machine) → `TimeManager` / `SpawnManager` / `EnemyManager` / `UpgradeManager` (gameplay loop) → `HUDController` / `UpgradeUIManager` / `GameOverController` / `TooltipController` (UI). On death, `GameManager.TriggerGameOver` saves, then `PlayerDeathSequence` (on the Player) plays the camera zoom + explosion and only then raises `OnGameOver`. `GameManager.Revive` plays the same explosion in reverse (`PlayRevive`) and stays in `GameOver` until it ends.
 - Player input: `PlayerInput.cs` mixes `InputSystem_Actions.Player.Move` with a virtual `JoystickController`; dash fires via `InputSystem_Actions.Player.Dash` or `DashButtonController.TriggerDash()`.
 - Save schema: `PlayerPrefs` keys in `SaveManager.LoadData` / `SaveData` — BestTime, BestKills, Cronos, MusicVolume, SFXVolume, VibrationEnabled, StartingTimeLevel, AttackRangeLevel, DashCooldownLevel, EquippedSkin, EquippedEnemySet, plus `SkinUnlocked_<name>` and `CurrentRunCronos` and `FirstTimePlayed`.
 - Upgrade data: `UpgradeData : ScriptableObject` (id, title, description, icon, isRare, `UpgradeType`, value) — create assets via `Assets ▸ Create ▸ Instant ▸ Upgrade Data`.

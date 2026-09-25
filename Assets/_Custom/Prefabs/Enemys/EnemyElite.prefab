@@ -113,7 +113,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7590535577056678407, guid: fe42c8b526e77e54ab91d0590272d9e8, type: 3}
-  m_Color: {r: 0.754717, g: 0.18867925, b: 0.18867925, a: 1}
+  m_Color: {r: 1, g: 0.6666667, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -184,13 +184,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4faaee11e55bc1449aee1da0a9d12b33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyElite
-  maxHealth: 30
+  maxHealth: 20
   timeRewardOnDeath: 8
   timeDamageToPlayer: 6
   isElite: 1
   dieOnContactWithPlayer: 0
   damageFeedback: {fileID: 0}
-  baseColor: {r: 1, g: 0, b: 0, a: 1}
+  baseColor: {r: 1, g: 0.6666667, b: 0, a: 1}
   deathParticleCount: 12
   moveSpeed: 2.5
   preferredDistance: 6.5

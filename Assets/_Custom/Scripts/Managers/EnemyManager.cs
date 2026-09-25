@@ -19,6 +19,7 @@ public class EnemyManager : MonoBehaviour
     private readonly HashSet<EnemyBase> registered = new HashSet<EnemyBase>();
     private readonly List<EnemyBase> nearestBuffer = new List<EnemyBase>(8);
     private readonly List<EnemyBase> killBuffer = new List<EnemyBase>(64);
+    private readonly List<EnemyBase> areaBuffer = new List<EnemyBase>(32);
     private bool wasPlaying = false;
 
     public event Action<EnemyBase, bool> OnEnemyKilled;
@@ -69,10 +70,19 @@ public class EnemyManager : MonoBehaviour
         wasPlaying = true;
 
         float deltaTime = Time.fixedDeltaTime;
+        float magnet = UpgradeManager.Instance != null ? UpgradeManager.Instance.MagnetStrength : 0f;
+        float speed = SpawnManager.Instance != null ? SpawnManager.Instance.OvertimeSpeedMultiplier : 1f;
         for (int i = ActiveEnemies.Count - 1; i >= 0; i--)
         {
+            // Un Tick puede matar a varios a la vez (explosión del Bombardero): la lista
+            // encoge más de uno y el índice se queda fuera de rango.
+            if (i >= ActiveEnemies.Count) continue;
+
             EnemyBase enemy = ActiveEnemies[i];
-            if (enemy != null) enemy.Tick(deltaTime);
+            if (enemy == null) continue;
+
+            enemy.Tick(deltaTime, speed);
+            if (magnet > 0f) enemy.ApplyPull(magnet, UpgradeManager.MAGNET_RADIUS);
         }
     }
 
@@ -157,7 +167,7 @@ public class EnemyManager : MonoBehaviour
 
         foreach (var enemy in ActiveEnemies)
         {
-            if (enemy == null || !enemy.gameObject.activeInHierarchy) continue;
+            if (enemy == null || !enemy.gameObject.activeInHierarchy || !enemy.IsTargetable) continue;
 
             float distSqr = (enemy.transform.position - position).sqrMagnitude;
             if (distSqr < minDistanceSqr)
@@ -183,7 +193,7 @@ public class EnemyManager : MonoBehaviour
         for (int i = 0; i < ActiveEnemies.Count; i++)
         {
             EnemyBase enemy = ActiveEnemies[i];
-            if (enemy == null || !enemy.gameObject.activeInHierarchy) continue;
+            if (enemy == null || !enemy.gameObject.activeInHierarchy || !enemy.IsTargetable) continue;
 
             float distSqr = (enemy.transform.position - position).sqrMagnitude;
             if (distSqr > rangeSqr) continue;
@@ -236,6 +246,32 @@ public class EnemyManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Daño en área de los upgrades (onda de dash, zona muerta, fragmentación). Las
+    /// muertes cuentan como bajas normales, con su tiempo y su recompensa.
+    /// </summary>
+    public void DamageEnemiesInRadius(Vector2 center, float radius, int damage)
+    {
+        float radiusSqr = radius * radius;
+
+        // Copia: OnHit→Die saca enemigos de ActiveEnemies mientras recorremos.
+        areaBuffer.Clear();
+        for (int i = 0; i < ActiveEnemies.Count; i++)
+        {
+            EnemyBase enemy = ActiveEnemies[i];
+            if (enemy == null) continue;
+
+            if (((Vector2)enemy.transform.position - center).sqrMagnitude <= radiusSqr)
+                areaBuffer.Add(enemy);
+        }
+
+        for (int i = 0; i < areaBuffer.Count; i++)
+        {
+            if (areaBuffer[i] != null) areaBuffer[i].OnHit(damage, false);
+        }
+        areaBuffer.Clear();
+    }
+
+    /// <summary>
     /// Recicla (sin recompensa, baja ni tiempo) los enemigos dentro del radio. Lo usa el
     /// revivir por anuncio para que el jugador no reaparezca dentro del enjambre que lo
     /// mató y caiga muerto a los dos segundos.
@@ -249,6 +285,9 @@ public class EnemyManager : MonoBehaviour
         {
             EnemyBase enemy = ActiveEnemies[i];
             if (enemy == null) continue;
+
+            // El jefe no se recicla: al revivir la barrera sigue ahí.
+            if (enemy is EnemyBoss) continue;
 
             if (((Vector2)enemy.transform.position - (Vector2)center).sqrMagnitude <= radiusSqr)
                 killBuffer.Add(enemy);

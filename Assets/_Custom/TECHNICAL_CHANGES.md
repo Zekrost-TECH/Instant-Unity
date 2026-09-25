@@ -396,3 +396,106 @@ Prefabs creados:
 3. Ajustar el balance de tiempos, spawn y dificultad según métricas reales.
 4. Sustituir los audios temporales por contenido con licencia comercial.
 5. Configurar IDs y unidades reales de AdMob antes de publicar.
+
+---
+
+## 11. Alineación con el GDD (24 de septiembre de 2026)
+
+Se mantienen las desviaciones de diseño del proyecto (drenaje 1.25, penalización 6s, orden tanque→tirador, landscape, auto-elección al agotar la ventana, revivir por anuncio, progresión permanente).
+
+**Bugs corregidos**
+- El élite ya no se salta con la arena llena (`SpawnManager.SpawnElite`).
+- `AudioManager.FadeMusicTo` es relativo al volumen del jugador (antes subía la música a 1.0 tras cada upgrade).
+- El HUD no pone los Cronos a 0 ni se oculta durante la ventana de upgrade / pausa de tooltips.
+- SFX de golpe (`impactSFX`), daño recibido (`playerHurtSFX`), muerte de élite (`eliteDeathSFX`) y upgrade disponible (`upgradeAvailableSFX`). Beep de zona roja con volumen y ritmo crecientes.
+- Onboarding: `TooltipController` añadido a `1_Game` (objeto `GameStatus-Canvas/Onboarding`); pausa real (estado Paused) de 2s por tooltip.
+- Hápticos con Nice Vibrations (`HapticPatterns.PlayConstant`): 80ms daño, 40ms élite; dash y pickup quedan como toques mínimos.
+- Hitbox del jugador: `CircleCollider2D` de radio 0.3 (antes triángulo de ~1 unidad).
+- El dash ya no se dispara fuera de Playing.
+- Sprites procedurales de consumibles: el alfa estaba invertido (cuadrado con agujero); ahora son contornos de su figura.
+
+**Upgrades de sinergia (GDD)** — assets en `Upgrades/Common/6-9` y `Upgrades/Rare/6-9`, añadidos a los pools de `UpgradeManager`.
+- Comunes: Arco amplio (+30% rango), Cadena temporal, Dash veloz (-25% cooldown), Magnetismo.
+- Raros: Onda de dash, Reloj voraz (+50% tiempo por baja, 15s), Fragmentación, Zona muerta (`ToxicZone` reconvertida: daña enemigos).
+- Estado por partida: `UpgradeManager` (cadena, voraz, fragmentación, imán) y `PlayerCombat` (onda, zona). Daño en área: `EnemyManager.DamageEnemiesInRadius`.
+
+**Balance**: recompensa del rebaño 0.75→1.0s; HP del élite 30→20.
+
+**Enemigos**: colores de la paleta del GDD por tipo; proyectil magenta. Tirador en fase 2 desde los 150s (predicción de trayectoria y -25% cooldown).
+
+**Muerte y Game Over (segunda pasada)**
+- `PlayerDeathSequence` (en el Player): congela, la cámara se centra y hace zoom, el jugador se carga y estalla en pedazos (destello, anillos, partículas, SFX `playerDeathSFX`, háptico largo). `GameManager.TriggerGameOver` guarda al instante pero lanza `OnGameOver` al terminar la animación. Al volver a Playing (reiniciar/revivir) restaura cámara y jugador.
+- Panel de Game Over reorganizado (Header, StatsCard, CronosLine, PrimaryButtons, SecondaryButtons) con entrada animada en cascada; un toque la completa. Los botones se animan por alfa/posición porque su Animator controla la escala.
+- Cartas de upgrade: halo `RarityGlow` (sprite 9-slice `Sprites/UI/CardGlow.png`) azul/dorado según rareza, se revela al girar la carta.
+- Borrados por no usarse: `GeometryRenderer`, `SkinRenderer`, `BootstrapInitializer`, `UIManager`, `ObjectPooler`, `TimeUI`.
+
+**HUD y pantallas**: reloj grande centrado que late en alerta/peligro y destella al ganar/perder tiempo; barra por estado (dorada con Reloj voraz); línea de estado (aviso de élite, Reloj voraz); viñeta roja en ≤5s. Barra de la ventana de upgrade en rojo con <3s. Game Over: botones `+10-20 Cronos` (anuncio) y `Shop` (abre la tienda en el menú).
+
+---
+
+## 12. Cola de mejoras y enemigos de progresión
+
+**Bug: enemigos destruidos al cerrar la cola de mejoras.** La Fragmentación no tenía límite: cada enemigo de 1 HP muerto por una explosión volvía a explotar. Las explosiones encoladas se congelan bajo la ventana de mejora y detonaban todas al cerrarla, vaciando la arena; esas bajas abrían a su vez más ventanas. Ahora la cadena se corta en 2 generaciones (`UpgradeManager.FRAGMENT_MAX_GENERATIONS`). Además los consumibles sólo caen de bajas directas (o del élite): las muertes en área multiplicaban los "limpiar pantalla".
+
+**Anuncio de revivir**: reintento de carga con espera creciente, watchdog sólo hasta que el anuncio se abre, margen de 1s si el cierre llega antes que la recompensa, botones atenuados cuando no se pueden pulsar.
+
+**10 enemigos de progresión** (`SpawnManager.progressionEnemies`, prefabs en `Prefabs/Enemys`, sprites SDF en `Sprites/Enemies`). Se desbloquean por tiempo de partida, cada uno debuta con un grupo garantizado y el aviso "NEW: …" en el HUD. La probabilidad de que un spawn sea de progresión sube de 0 (45s) a 55% (225s); el resto sigue la tabla clásica.
+
+| Enemigo | Figura / color | HP | Desbloqueo | Mecánica |
+|---|---|---|---|---|
+| Splitter | Pentágono #9B5CFF | 3 | 60s | Se divide en 2 copias rápidas al morir |
+| Charger | Punta de flecha #B6FF3B | 2 | 75s | Se planta, avisa y embiste en línea recta |
+| Orbiter | Anillo #1FE0C4 | 2 | 90s | Orbita fuera de alcance y pica periódicamente |
+| Bomber | Octágono #FFE14D | 1 | 105s | Se arma cerca y estalla (daña al jugador y a enemigos) |
+| Summoner | Hexagrama #FF3DF5 | 4 | 120s | Lejos, invoca 2 esbirros cada 4.5s |
+| Shielder | Escudo #3D6BFF | 3 | 135s | Escudo frontal: sólo cae por la espalda o con daño en área |
+| Blinker | Reloj de arena #C9803A | 2 | 150s | Se teletransporta junto al jugador tras marcar el destino |
+| Healer | Cruz #3DFF7A | 2 | 165s | Cura a los enemigos cercanos cada 3s |
+| Swarm | Dardo #9AA7B8 | 1 | 180s | Grupos de 5, más rápidos que el jugador, kamikaze |
+| Phantom | Media luna #C8B6FF | 2 | 210s | Alterna fase intocable/visible |
+
+Ganchos nuevos en `EnemyBase`: `IsTargetable`, `CanHurtPlayer`, `OnHit` virtual, `Heal`, `SetTint`, `DamagePlayer`, `OwnerPool` (el pool de origen; `SpawnManager.ReleaseEnemy` ya no mira el tipo).
+
+
+---
+
+## 13. Anti-inmortalidad: topes de mejoras y Overtime
+
+**Problema:** la dificultad tenía techo (spawn mínimo 0.45s, 55 enemigos vivos, vida fija) y las mejoras se podían repetir sin límite (alcance que cubría la pantalla, drenaje al 10%, 10 ataques/s). Pasados unos minutos el reloj quedaba clavado en 45s y la partida no terminaba nunca, farmeando cientos de Cronos.
+
+**Topes por mejora:** `UpgradeData.maxStacks` (0 = sin límite). Al llegar al tope la mejora deja de ofrecerse. Techos absolutos en `UpgradeEffects`: alcance ≤ 6.5, cadencia ≥ 0.25s, drenaje ≥ 50%. Las mejoras que devuelven tiempo (Chronos Charge, Second Wind, Voracious Clock) no tienen tope: el Overtime ya las debilita.
+
+**Overtime** (bloque "Overtime" del `SpawnManager`): a partir de 3:00 sube un nivel por minuto, sin techo. Drenaje, ingresos y vida crecen de forma exponencial (con escalado lineal una build al máximo seguía ganando tiempo en el nivel 6). Por nivel:
+
+| Efecto | Por nivel |
+|---|---|
+| Drenaje del reloj | ×1.35 acumulativo |
+| Todo el tiempo ganado (bajas, cadenas, consumibles, mejoras) | ×0.7 acumulativo |
+| Vida de los enemigos que aparecen | ×1.35 acumulativo (redondeado) |
+| Velocidad de los enemigos | +6% (máx. ×1.5) |
+| Tiempo que quita cada golpe | +25% |
+| Enemigos vivos permitidos | +2 (máx. 45; ver sección 15) |
+
+Medido con todas las mejoras al tope e invulnerable: el reloj aguanta en el nivel 4, empieza a caer en el 6 y se vacía en el 8 (~10 min). Una partida normal, que recibe golpes, termina mucho antes.
+
+El HUD anuncia cada nivel ("OVERTIME!", "OVERTIME 2"…) y lo deja fijo bajo el reloj. Revivir no reinicia el nivel.
+
+---
+
+## 14. Overtime como jefe: Chrono Warden y barreras
+
+Cada nivel de Overtime (cada minuto desde 3:00) trae un jefe, `EnemyBoss` (engranaje carmesí, `Prefabs/Enemys/EnemyBoss.prefab`, sprite `Sprites/Enemies/EnemyGear.png`). Sólo hay un jefe a la vez: si al subir de nivel el anterior sigue vivo, el nuevo espera en cola (`PendingBossCount`, la barra del HUD muestra `BARRIER +N`) y aparece cuando termina la rotura de la barrera actual, con la vida del nivel en que sale.
+
+- **Jefe:** 60 HP × multiplicador de vida del nivel. Persigue despacio y dispara anillos de 12 proyectiles cada 3.5s; bajo el 50% se enfurece (16 proyectiles cada 2.4s, más rápido). Cada anillo gira medio hueco respecto al anterior. Avisa parpadeando y creciendo antes de disparar. No se recicla por distancia ni al revivir; el consumible de limpiar pantalla le quita un 25% en vez de matarlo. Suelta un consumible garantizado.
+- **Mientras vive:** drenaje ×1.2 extra, spawn ×1.35 más rápido, música de tensión con alarma, bordes rojos latiendo como un corazón y barra `BARRIER` con su vida en el HUD.
+- **Al derrotarlo (barrera rota):** `TimeManager.RaiseMaxTime` sube el tope del reloj +5s y suma esos 5s sin la reducción del Overtime. Onda dorada, partículas, sonido y vibración; cartel `BARRIER BROKEN / MAX TIME Ns` con los bordes destellando en dorado. Si se abre una ventana de mejora, el cartel espera a que se cierre.
+- **Pantalla rota:** al caer el jefe el juego se congela (`barrierCrackDuration`, 0.45s en tiempo real) y `ScreenShatter` (canvas `ScreenShatter-Canvas`, orden 100) captura la pantalla con el HUD incluido y la agrieta en telaraña desde donde cayó. Luego estalla: los pedazos salen disparados y caen, y en ese instante mueren todos los enemigos (`EnemyManager.KillAllEnemies`, cuentan como bajas sin tiempo) y desaparecen los proyectiles. Las ventanas de mejora que dispare la limpieza esperan `barrierUpgradeHold` (1.3s) con `UpgradeManager.HoldUpgrades` para no tapar el cristal ni el cartel. Sonidos: `barrierCrackSFX` (BulletCrack1) y `barrierShatterSFX` (Glass2) en el `AudioManager`.
+- Ajustes en el bloque "Overtime · Jefe y barreras" del `SpawnManager` y "Overtime · Jefe" del `HUDController`. El tope del reloj ya no es constante: `TimeManager.MaxTime` (vuelve a 45 al empezar partida).
+
+## 15. Densidad de enemigos y revivir rearmándose
+
+**Problema:** el spawn llega hasta ~6.7 enemigos/s, así que el tope de enemigos vivos es lo único que decide cuánto se llena la pantalla, y la cámara fija hace que casi todos estén a la vista. La escena tenía 55 vivos desde el 1:30 y +10 por nivel de Overtime hasta 95: medido, 51 en pantalla al 1:47 y 94 en el Overtime 4. Ilegible en móvil.
+
+**Cambio:** el tope crece con la partida en vez de saturarse al minuto y medio. `startActiveEnemies` 18 → `maxActiveEnemies` 35 de forma lineal hasta las 3:00; en Overtime +2 por nivel hasta `overtimeMaxActiveEnemies` 45. La dificultad del Overtime sigue en vida, velocidad, drenaje e ingresos exponenciales (sección 13) y en la mezcla de enemigos de progresión, no en la cantidad. Élites, jefes y copias del divisor siguen fuera del tope.
+
+**Revivir:** `PlayerDeathSequence.PlayRevive` reproduce la muerte al revés. Los pedazos aparecen dispersos y aceleran girando hacia el jugador, un destello se cierra sobre él y se rearma grande y parpadeando hasta asentarse (anillos, partículas, `reviveSFX` = Boost1, vibración); luego la cámara se aleja a su encuadre. `GameManager.Revive` limpia el entorno y rellena el reloj al instante, pero la partida sigue congelada en GameOver (HUD oculto) hasta que termina la animación (~1.65s: `gatherDuration`, `reformDuration`, `zoomOutDuration`); después aplica la invulnerabilidad de gracia y vuelve a Playing.

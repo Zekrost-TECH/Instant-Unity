@@ -45,6 +45,8 @@ public class PickupManager : MonoBehaviour
 
     private const string DontDestroyOnLoadScene = "DontDestroyOnLoad";
     private const string PickupFontPath = "Fonts & Materials/LiberationSans SDF";
+    // Radio en unidades del círculo procedural a escala 1 (26px a 100 ppu).
+    private const float RingSpriteRadius = 0.26f;
 
     private static readonly Color TimeColor = new Color(0f, 1f, 0.53f);       // #00FF88
     private static readonly Color SpeedColor = new Color(0f, 0.8f, 1f);        // #00CCFF
@@ -66,7 +68,7 @@ public class PickupManager : MonoBehaviour
         container.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
 
         // El pickup se construye en runtime con SpriteRenderer + sprite procedural blanco
-        // (tinte por color): GeometryRenderer/mesh sin UVs se ve magenta en URP.
+        // (tinte por color): una malla generada sin UVs se ve magenta en URP.
         GameObject template = new GameObject("PickupTemplate");
         template.transform.SetParent(container, false);
 
@@ -260,16 +262,20 @@ public class PickupManager : MonoBehaviour
         Recycle(pickup);
     }
 
-    private void SpawnRing(Vector3 position, Color color)
+    /// <summary>
+    /// Anillo expansivo que se desvanece. También lo usan los upgrades de área (onda de
+    /// dash, fragmentación) para marcar su radio real de daño.
+    /// </summary>
+    public void SpawnRing(Vector3 position, Color color, float worldRadius = 0.37f)
     {
         if (ringPool == null) return;
 
         PickupRingFx ring = ringPool.Get();
-        ring.Setup(color);
+        ring.Setup(color, worldRadius / RingSpriteRadius);
         ring.transform.position = position;
     }
 
-    private void SpawnFloatingText(Vector3 position, string message, Color color)
+    public void SpawnFloatingText(Vector3 position, string message, Color color)
     {
         if (floatingTextPool == null || string.IsNullOrEmpty(message)) return;
 

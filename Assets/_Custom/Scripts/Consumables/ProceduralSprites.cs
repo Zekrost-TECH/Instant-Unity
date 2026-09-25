@@ -4,6 +4,9 @@ using UnityEngine;
 public static class ProceduralSprites
 {
     private const int TextureSize = 64;
+    // Medio grosor (px de textura) del contorno. Las figuras son huecas a propósito:
+    // rellenas se confundían con enemigos del mismo color. "disc" es la única rellena.
+    private const float OutlineHalfWidth = 5f;
     private static readonly Dictionary<string, Sprite> cache = new Dictionary<string, Sprite>();
 
     public static Sprite Get(string shape)
@@ -30,7 +33,12 @@ public static class ProceduralSprites
             for (int x = 0; x < TextureSize; x++)
             {
                 Vector2 p = new Vector2(x + 0.5f - TextureSize * 0.5f, y + 0.5f - TextureSize * 0.5f);
-                float alpha = Mathf.Clamp01(0.5f - SignedDistance(shape, p));
+                float distance = SignedDistance(shape, p);
+                // Antes era 0.5 - distance: el alfa quedaba invertido y cada pickup se veía
+                // como un cuadrado opaco con la figura recortada en el centro.
+                float alpha = shape == "disc"
+                    ? Mathf.Clamp01(0.5f + distance)
+                    : Mathf.Clamp01(0.5f + OutlineHalfWidth - Mathf.Abs(distance));
                 pixels[y * TextureSize + x] = new Color(1f, 1f, 1f, alpha);
             }
         }
@@ -46,7 +54,12 @@ public static class ProceduralSprites
         switch (shape)
         {
             case "circle":
+            case "disc":
                 return 26f - p.magnitude;
+
+            case "dashedcircle":
+                // 12 trazos: los huecos quedan muy lejos del contorno y salen transparentes.
+                return Mathf.Sin(Mathf.Atan2(p.y, p.x) * 12f) > 0f ? 26f - p.magnitude : -100f;
 
             case "square":
                 return 22f - Mathf.Max(Mathf.Abs(p.x), Mathf.Abs(p.y));

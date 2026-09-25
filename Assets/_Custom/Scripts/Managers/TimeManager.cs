@@ -11,6 +11,8 @@ public class TimeManager : MonoBehaviour
     public const float TIME_PENALTY = 6f;
 
     public float CurrentTime { get; private set; }
+    /// <summary>Tope actual del reloj: empieza en TIME_MAX y sube con cada barrera de Overtime rota.</summary>
+    public float MaxTime { get; private set; } = TIME_MAX;
     public float TimeGainedThisRun { get; private set; }
     
     private float drainMultiplier = 1.0f;
@@ -26,7 +28,6 @@ public class TimeManager : MonoBehaviour
     public event Action<TimeColorState> OnTimeColorChanged;
 
     private float nextBeepTime = 0f;
-    private float beepInterval = 0.5f;
 
     public enum TimeColorState
     {
@@ -75,8 +76,9 @@ public class TimeManager : MonoBehaviour
                 return;
         }
 
-        CurrentTime -= TIME_DRAIN * drainMultiplier * PermanentDrainModifier * Time.deltaTime;
-        CurrentTime = Mathf.Clamp(CurrentTime, 0f, TIME_MAX);
+        float overtimeDrain = SpawnManager.Instance != null ? SpawnManager.Instance.OvertimeDrainMultiplier : 1f;
+        CurrentTime -= TIME_DRAIN * drainMultiplier * PermanentDrainModifier * overtimeDrain * Time.deltaTime;
+        CurrentTime = Mathf.Clamp(CurrentTime, 0f, MaxTime);
         
         OnTimeChanged?.Invoke(CurrentTime);
         UpdateTimeColorState();
@@ -120,16 +122,23 @@ public class TimeManager : MonoBehaviour
     {
         if (Time.time >= nextBeepTime)
         {
-            AudioManager.Instance?.PlayClockBeep();
-            nextBeepTime = Time.time + beepInterval;
+            // Más fuerte y más rápido cuanto más cerca de 0: de 0.5s a 0.25s entre beeps.
+            float urgency = 1f - Mathf.Clamp01(CurrentTime / 5f);
+            AudioManager.Instance?.PlayClockBeep(urgency);
+            nextBeepTime = Time.time + Mathf.Lerp(0.5f, 0.25f, urgency);
         }
     }
 
     public float AddTime(float amount)
     {
+        // Todo el tiempo ganado (bajas, cadenas, consumibles, mejoras) pasa por aquí:
+        // en Overtime rinde menos, para que ninguna build sostenga el reloj para siempre.
+        if (amount > 0f && SpawnManager.Instance != null)
+            amount *= SpawnManager.Instance.OvertimeIncomeMultiplier;
+
         float previousTime = CurrentTime;
         CurrentTime += amount;
-        CurrentTime = Mathf.Clamp(CurrentTime, 0f, TIME_MAX);
+        CurrentTime = Mathf.Clamp(CurrentTime, 0f, MaxTime);
         float timeGained = CurrentTime - previousTime;
 
         TimeGainedThisRun += Mathf.Max(0f, timeGained);
@@ -144,7 +153,7 @@ public class TimeManager : MonoBehaviour
     public void FillToMax()
     {
         float previousTime = CurrentTime;
-        CurrentTime = TIME_MAX;
+        CurrentTime = MaxTime;
         float timeGained = CurrentTime - previousTime;
 
         criticalStateNotified = false;
@@ -156,11 +165,30 @@ public class TimeManager : MonoBehaviour
         UpdateTimeColorState();
     }
 
+    /// <summary>
+    /// Recompensa de barrera rota: sube el tope y suma el mismo tiempo sin pasar por la
+    /// reducción de ingresos del Overtime (es el premio por aguantar, no una baja más).
+    /// </summary>
+    public void RaiseMaxTime(float amount)
+    {
+        if (amount <= 0f) return;
+
+        MaxTime += amount;
+        float previousTime = CurrentTime;
+        CurrentTime = Mathf.Min(CurrentTime + amount, MaxTime);
+        float gained = CurrentTime - previousTime;
+
+        TimeGainedThisRun += gained;
+        OnTimeChanged?.Invoke(CurrentTime);
+        if (gained > 0f) OnTimeAdjusted?.Invoke(gained);
+        UpdateTimeColorState();
+    }
+
     public float SubtractTime(float amount)
     {
         float previousTime = CurrentTime;
         CurrentTime -= amount;
-        CurrentTime = Mathf.Clamp(CurrentTime, 0f, TIME_MAX);
+        CurrentTime = Mathf.Clamp(CurrentTime, 0f, MaxTime);
         float timeLost = previousTime - CurrentTime;
 
         OnTimeChanged?.Invoke(CurrentTime);
@@ -178,6 +206,7 @@ public class TimeManager : MonoBehaviour
 
     public void ResetTime()
     {
+        MaxTime = TIME_MAX;
         float bonusTime = 0f;
         if (SaveManager.Instance != null)
         {

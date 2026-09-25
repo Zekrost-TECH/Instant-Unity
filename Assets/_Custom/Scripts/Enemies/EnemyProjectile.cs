@@ -9,6 +9,7 @@ public class EnemyProjectile : MonoBehaviour
     public float lifetime = 4f;
 
     private Rigidbody2D rb;
+    private float currentSpeed;
     private float spawnTime;
     private bool released;
 
@@ -29,11 +30,18 @@ public class EnemyProjectile : MonoBehaviour
     /// </summary>
     public void Launch(Vector3 position, Vector2 direction)
     {
+        Launch(position, direction, speed);
+    }
+
+    /// <summary>Con velocidad propia (los anillos del jefe van más lentos para poder esquivarse).</summary>
+    public void Launch(Vector3 position, Vector2 direction, float launchSpeed)
+    {
+        currentSpeed = launchSpeed;
         transform.position = position;
         if (rb != null) rb.position = position;
 
         transform.up = direction;
-        if (rb != null) rb.linearVelocity = direction.normalized * speed;
+        if (rb != null) rb.linearVelocity = direction.normalized * currentSpeed;
     }
 
     private void Update()
@@ -46,7 +54,7 @@ public class EnemyProjectile : MonoBehaviour
 
         if (rb.linearVelocity == Vector2.zero && transform.up != Vector3.zero)
         {
-            rb.linearVelocity = transform.up * speed;
+            rb.linearVelocity = transform.up * currentSpeed;
         }
 
         if (Time.time - spawnTime > lifetime)

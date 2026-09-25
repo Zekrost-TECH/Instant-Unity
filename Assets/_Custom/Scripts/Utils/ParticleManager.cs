@@ -81,7 +81,7 @@ public class ParticleManager : MonoBehaviour
 
     private void Start()
     {
-        // Si el manager sobrevive a los cambios de escena (BootstrapInitializer), el
+        // Si el manager sobrevive a los cambios de escena (DontDestroyOnLoad), el
         // contenedor debe sobrevivir también o el pool guardaría objetos destruidos.
         if (container != null && gameObject.scene.name == DontDestroyOnLoadScene)
         {

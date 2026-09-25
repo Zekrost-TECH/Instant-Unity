@@ -52,6 +52,9 @@ public class PlayerMovement : MonoBehaviour
     private float speedBoostTimer;
     private float invulnerabilityTimer;
 
+    /// <summary>Origen y dirección del dash. Lo escuchan los upgrades de dash de PlayerCombat.</summary>
+    public event System.Action<Vector2, Vector2> OnDashStarted;
+
     public bool IsInvulnerable => isDashing || hitInvulnerabilityCounter > 0f || invulnerabilityTimer > 0f;
     public bool IsDashing => isDashing;
     public float DashCooldownRemaining => dashCooldownCounter;
@@ -88,9 +91,6 @@ public class PlayerMovement : MonoBehaviour
 
     private void ApplyEquippedSkin()
     {
-        SkinRenderer skinRenderer = GetComponent<SkinRenderer>();
-        if (skinRenderer != null) skinRenderer.ApplySkin();
-
         // El color sale del catálogo de SkinManager, no de un switch duplicado aquí:
         // añadir una skin nueva es un solo cambio, en el catálogo.
         SkinManager manager = SkinManager.Ensure();
@@ -231,6 +231,11 @@ public class PlayerMovement : MonoBehaviour
 
     private void TryStartDash()
     {
+        // El dash llega por evento, no por Update: sin esto se podía disparar con la
+        // ventana de upgrade o una pausa abierta y quedarse "dashing" congelado.
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
+            return;
+
         if (dashCooldownCounter <= 0f && !isDashing)
         {
             isDashing = true;
@@ -248,6 +253,7 @@ public class PlayerMovement : MonoBehaviour
                 ParticleManager.Instance.SpawnDashTrail(transform.position, dashDirection);
 
             dashTrailTimer = 0f;
+            OnDashStarted?.Invoke(rb.position, dashDirection);
         }
     }
 

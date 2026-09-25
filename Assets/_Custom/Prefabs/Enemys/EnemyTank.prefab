@@ -405,7 +405,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 48e93eef0688c4a259cb0eddcd8661f7, type: 3}
-  m_Color: {r: 0.754717, g: 0.18867925, b: 0.18867925, a: 1}
+  m_Color: {r: 0.6666667, g: 0.13333334, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -478,7 +478,7 @@ MonoBehaviour:
   isElite: 0
   dieOnContactWithPlayer: 0
   damageFeedback: {fileID: 2277499809786878653}
-  baseColor: {r: 1, g: 0, b: 0, a: 1}
+  baseColor: {r: 0.6666667, g: 0.13333334, b: 0, a: 1}
   deathParticleCount: 8
   moveSpeed: 1.5
 --- !u!114 &5884904390662010035

@@ -8,7 +8,16 @@ public class EnemyShooter : EnemyBase
     public float stoppingDistance = 5f;
     public float retreatDistance = 3f;
 
+    [Header("Fase 2 (GDD): disparo con predicción")]
+    [Tooltip("Segundos de partida a partir de los que apunta a donde ESTARÁ el jugador. Los tiradores entran a los 90s: la fase 2 llega un minuto después.")]
+    public float phase2StartTime = 150f;
+    [Tooltip("Multiplicador del cooldown de disparo en fase 2.")]
+    public float phase2CooldownMultiplier = 0.75f;
+
     private float shootTimer;
+    private Rigidbody2D playerBody;
+
+    private bool InPhase2 => SpawnManager.Instance != null && SpawnManager.Instance.GameTime >= phase2StartTime;
 
     protected override void OnEnable()
     {
@@ -53,21 +62,42 @@ public class EnemyShooter : EnemyBase
         shootTimer -= deltaTime;
         if (shootTimer <= 0f)
         {
-            shootTimer = shootCooldown;
-            Shoot(directionToPlayer);
+            bool phase2 = InPhase2;
+            shootTimer = shootCooldown * (phase2 ? phase2CooldownMultiplier : 1f);
+            Shoot(directionToPlayer, phase2);
         }
     }
 
-    private void Shoot(Vector2 directionToPlayer)
+    private void Shoot(Vector2 directionToPlayer, bool leadTarget)
     {
         if (SpawnManager.Instance != null)
         {
             EnemyProjectile projectile = SpawnManager.Instance.GetProjectile();
             if (projectile != null)
             {
-                Vector3 muzzle = (Vector3)rb.position + (Vector3)directionToPlayer * 0.5f;
-                projectile.Launch(muzzle, directionToPlayer);
+                Vector2 muzzle = rb.position + directionToPlayer * 0.5f;
+                Vector2 aim = leadTarget ? LeadDirection(muzzle, projectile.speed) : directionToPlayer;
+                projectile.Launch(muzzle, aim);
             }
         }
+    }
+
+    /// <summary>
+    /// Predicción de primer orden: apunta a donde estará el jugador si mantiene su
+    /// velocidad. Obliga a cambiar de dirección para esquivar, no basta con correr recto.
+    /// </summary>
+    private Vector2 LeadDirection(Vector2 muzzle, float projectileSpeed)
+    {
+        if (playerBody == null) playerBody = playerTransform.GetComponent<Rigidbody2D>();
+
+        Vector2 target = playerTransform.position;
+        if (playerBody != null && projectileSpeed > 0f)
+        {
+            float travelTime = Vector2.Distance(muzzle, target) / projectileSpeed;
+            target += playerBody.linearVelocity * travelTime;
+        }
+
+        Vector2 aim = target - muzzle;
+        return aim.sqrMagnitude > 0.0001f ? aim.normalized : Vector2.up;
     }
 }

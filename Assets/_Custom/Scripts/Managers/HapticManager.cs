@@ -1,4 +1,5 @@
 using UnityEngine;
+using Lofelt.NiceVibrations;
 
 public class HapticManager : MonoBehaviour
 {
@@ -14,6 +15,7 @@ public class HapticManager : MonoBehaviour
             return;
         }
         Instance = this;
+        HapticController.Init();
     }
 
     private void OnDestroy()
@@ -21,28 +23,33 @@ public class HapticManager : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
+    // Handheld.Vibrate() ignoraba la duración (siempre el pulso largo del sistema).
+    // Nice Vibrations respeta amplitud y duración: daño y élite son los eventos
+    // fuertes del GDD; dash y pickup quedan como toques casi imperceptibles.
+
     public void TriggerDamage()
     {
-        if (!IsEnabled()) return;
-        Vibrate(80);
+        Play(1f, 0.8f, 0.08f);
+    }
+
+    public void TriggerDeath()
+    {
+        Play(1f, 0.5f, 0.25f);
     }
 
     public void TriggerEliteKill()
     {
-        if (!IsEnabled()) return;
-        Vibrate(40);
+        Play(0.65f, 0.6f, 0.04f);
     }
 
     public void TriggerPickup()
     {
-        if (!IsEnabled()) return;
-        Vibrate(30);
+        Play(0.3f, 0.5f, 0.02f);
     }
 
     public void TriggerDash()
     {
-        if (!IsEnabled()) return;
-        Vibrate(20);
+        Play(0.2f, 0.4f, 0.02f);
     }
 
     private bool IsEnabled()
@@ -52,14 +59,9 @@ public class HapticManager : MonoBehaviour
         return true;
     }
 
-    private void Vibrate(long milliseconds)
+    private void Play(float amplitude, float frequency, float duration)
     {
-#if UNITY_ANDROID && !UNITY_EDITOR
-        Handheld.Vibrate();
-#elif UNITY_IOS && !UNITY_EDITOR
-        Handheld.Vibrate();
-#else
-        // En editor no hay vibración disponible
-#endif
+        if (!IsEnabled()) return;
+        HapticPatterns.PlayConstant(amplitude, frequency, duration);
     }
 }

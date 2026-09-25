@@ -158,7 +158,14 @@ public class GameManager : MonoBehaviour
 
             Debug.Log($"Resultados de la partida: +{cronosGained} Cronos ganados. Record Time: {SaveManager.Instance.BestTime:F1}s, Record Kills: {SaveManager.Instance.BestKills}");
 
-            OnGameOver?.Invoke(finalTime, finalKills, payout, newRecord);
+            // El guardado ya está hecho; la UI de Game Over espera a que termine la
+            // animación de muerte (zoom de cámara + explosión del jugador).
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            PlayerDeathSequence deathSequence = playerObj != null ? playerObj.GetComponent<PlayerDeathSequence>() : null;
+            if (deathSequence != null)
+                deathSequence.Play(() => OnGameOver?.Invoke(finalTime, finalKills, payout, newRecord));
+            else
+                OnGameOver?.Invoke(finalTime, finalKills, payout, newRecord);
         }
     }
 
@@ -186,20 +193,32 @@ public class GameManager : MonoBehaviour
 
         // Sin esto revives dentro del enjambre que te mató y mueres otra vez al instante.
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-        if (playerObj != null)
+        if (playerObj != null && EnemyManager.Instance != null)
         {
-            PlayerMovement movement = playerObj.GetComponent<PlayerMovement>();
-            if (movement != null)
-            {
-                movement.TriggerHitInvulnerability();
-                movement.ApplyInvulnerability(reviveGraceDuration);
-            }
-
             // Limpiar el enjambre que rodea al jugador: el 1s de invulnerabilidad
             // standard no bastaba y el "revive" se sentía como quedarse pegado
             // (muerte otra vez a los 2 segundos del anuncio).
-            if (EnemyManager.Instance != null)
-                EnemyManager.Instance.RecycleEnemiesAround(playerObj.transform.position, reviveClearRadius);
+            EnemyManager.Instance.RecycleEnemiesAround(playerObj.transform.position, reviveClearRadius);
+        }
+
+        // El jugador se rearma (su explosión al revés) con la partida aún congelada en
+        // GameOver; el juego sigue al terminar.
+        PlayerDeathSequence deathSequence = playerObj != null ? playerObj.GetComponent<PlayerDeathSequence>() : null;
+        if (deathSequence != null)
+            deathSequence.PlayRevive(() => FinishRevive(playerObj));
+        else
+            FinishRevive(playerObj);
+    }
+
+    private void FinishRevive(GameObject playerObj)
+    {
+        if (CurrentState != GameState.GameOver) return;
+
+        PlayerMovement movement = playerObj != null ? playerObj.GetComponent<PlayerMovement>() : null;
+        if (movement != null)
+        {
+            movement.TriggerHitInvulnerability();
+            movement.ApplyInvulnerability(reviveGraceDuration);
         }
 
         AudioManager.Instance?.FadeMusicTo(1f, 0.3f);

@@ -20,10 +20,27 @@ public class AudioManager : MonoBehaviour
     public AudioClip timeGainSFX;
     public AudioClip clockBeepSFX;
     public AudioClip pickupSFX;
+    public AudioClip playerHurtSFX;
+    public AudioClip eliteDeathSFX;
+    public AudioClip upgradeAvailableSFX;
+    public AudioClip playerDeathSFX;
+    public AudioClip barrierCrackSFX;
+    public AudioClip barrierShatterSFX;
+    public AudioClip reviveSFX;
 
     [Header("Death Feel")]
     [Range(0f, 1f)] public float enemyDeathVolume = 0.45f;
     [Range(0f, 1f)] public float eliteDeathVolume = 0.75f;
+
+    [Header("Combat Feel")]
+    [Tooltip("El golpe suena ~100 veces por partida: bajo y con variación para que no canse.")]
+    [Range(0f, 1f)] public float hitVolume = 0.3f;
+    [Range(0f, 1f)] public float hurtVolume = 1f;
+
+    // Volumen elegido por el jugador. Los fades trabajan como fracción de este valor.
+    private float musicVolume = 0.8f;
+    private float musicFade = 1f;
+    private Coroutine fadeRoutine;
 
     private void Awake()
     {
@@ -87,9 +104,10 @@ public class AudioManager : MonoBehaviour
 
     public void SetVolume(float music, float sfx)
     {
+        musicVolume = music;
         if (musicSource != null)
         {
-            musicSource.volume = music;
+            musicSource.volume = musicVolume * musicFade;
         }
         if (sfxSource != null)
         {
@@ -116,12 +134,35 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    public void PlayClockBeep()
+    /// <summary>Beep de zona roja. urgency 0..1: el volumen sube de 0.4 a 1.0 según baja el reloj.</summary>
+    public void PlayClockBeep(float urgency)
     {
-        if (clockBeepSFX != null && sfxSource != null)
-        {
-            sfxSource.PlayOneShot(clockBeepSFX, 0.8f);
-        }
+        PlaySFX(clockBeepSFX, Mathf.Lerp(0.4f, 1f, urgency));
+    }
+
+    public void PlayHitSFX()
+    {
+        PlaySFX(impactSFX, hitVolume * Random.Range(0.8f, 1f));
+    }
+
+    public void PlayHurtSFX()
+    {
+        PlaySFX(playerHurtSFX != null ? playerHurtSFX : impactSFX, hurtVolume);
+    }
+
+    public void PlayPlayerDeathSFX()
+    {
+        PlaySFX(playerDeathSFX != null ? playerDeathSFX : eliteDeathSFX, 1f);
+    }
+
+    public void PlayReviveSFX()
+    {
+        PlaySFX(reviveSFX != null ? reviveSFX : upgradeAvailableSFX, 1f);
+    }
+
+    public void PlayUpgradeAvailableSFX()
+    {
+        PlaySFX(upgradeAvailableSFX != null ? upgradeAvailableSFX : upgradeSelectSFX, 0.9f);
     }
 
     public void PlayTimeGainSFX()
@@ -141,7 +182,8 @@ public class AudioManager : MonoBehaviour
     {
         float baseVolume = isElite ? eliteDeathVolume : enemyDeathVolume;
         float volume = baseVolume * Random.Range(0.9f, 1.05f);
-        PlaySFX(enemyDeathSFX, volume);
+        AudioClip clip = isElite && eliteDeathSFX != null ? eliteDeathSFX : enemyDeathSFX;
+        PlaySFX(clip, volume);
     }
 
     public void PlayMusic(AudioClip clip)
@@ -177,27 +219,70 @@ public class AudioManager : MonoBehaviour
 
     private void HandleTimeCriticalEnded()
     {
-        PlayMainMusic();
+        // Con un jefe de Overtime vivo la tensión sigue aunque el reloj se recupere.
+        if (!overtimeTension) PlayMainMusic();
     }
 
-    public void FadeMusicTo(float targetVolume, float duration)
+    private bool overtimeTension;
+
+    /// <summary>Música de tensión mientras haya un jefe de Overtime vivo.</summary>
+    public void SetOvertimeTension(bool active)
+    {
+        if (overtimeTension == active) return;
+        overtimeTension = active;
+
+        if (active)
+        {
+            if (tensionMusic != null && musicSource != null && musicSource.clip != tensionMusic)
+                PlayMusic(tensionMusic);
+            PlaySFX(upgradeMissedSFX, 0.8f); // alarma de aviso
+        }
+        else
+        {
+            PlayMainMusic();
+        }
+    }
+
+    public void PlayBarrierCrackSFX()
+    {
+        PlaySFX(barrierCrackSFX, 1f);
+    }
+
+    public void PlayBarrierBrokenSFX()
+    {
+        PlaySFX(barrierShatterSFX, 1f);
+        PlayEnemyDeathSFX(true);
+        PlayUpgradeAvailableSFX();
+    }
+
+    /// <summary>
+    /// Fade relativo al volumen de música del jugador: 1 = su volumen, 0.3 = 30% de él.
+    /// Antes era absoluto y cada ventana de upgrade devolvía la música a 1.0 aunque
+    /// el jugador la tuviera bajada o silenciada.
+    /// </summary>
+    public void FadeMusicTo(float volumeFraction, float duration)
     {
         if (musicSource == null) return;
-        StartCoroutine(FadeMusicCoroutine(targetVolume, duration));
+        if (fadeRoutine != null) StopCoroutine(fadeRoutine);
+        fadeRoutine = StartCoroutine(FadeMusicCoroutine(volumeFraction, duration));
     }
 
-    private IEnumerator FadeMusicCoroutine(float targetVolume, float duration)
+    private IEnumerator FadeMusicCoroutine(float targetFraction, float duration)
     {
-        float startVolume = musicSource.volume;
+        float startFraction = musicFade;
         float elapsed = 0f;
 
+        // Tiempo real: el hit-stop cambia timeScale y no debe frenar el fade.
         while (elapsed < duration)
         {
-            elapsed += Time.deltaTime;
-            musicSource.volume = Mathf.Lerp(startVolume, targetVolume, elapsed / duration);
+            elapsed += Time.unscaledDeltaTime;
+            musicFade = Mathf.Lerp(startFraction, targetFraction, elapsed / duration);
+            musicSource.volume = musicVolume * musicFade;
             yield return null;
         }
 
-        musicSource.volume = targetVolume;
+        musicFade = targetFraction;
+        musicSource.volume = musicVolume * musicFade;
+        fadeRoutine = null;
     }
 }

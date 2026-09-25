@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Pool;
 using MoreMountains.Feedbacks;
 
 [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
@@ -28,9 +29,26 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
 
     private Collider2D ownCollider;
     private bool released;
+    private bool lastHitWasArea;
+    private int healthCap;
 
     private static Transform cachedPlayerTransform;
     private static PlayerCombat cachedPlayerCombat;
+
+    /// <summary>Pool del que salió: SpawnManager lo usa para devolverlo sin mirar su tipo.</summary>
+    internal ObjectPool<EnemyBase> OwnerPool;
+
+    protected bool IsReleased => released;
+    protected int HealthCap => healthCap;
+
+    /// <summary>Vida restante de 0 a 1 (barra del jefe).</summary>
+    public float HealthFraction => healthCap > 0 ? Mathf.Clamp01((float)currentHealth / healthCap) : 0f;
+
+    /// <summary>Si el ataque automático puede elegirlo (el Fantasma en fase no, el Escudero de frente tampoco).</summary>
+    public virtual bool IsTargetable => !released;
+
+    /// <summary>Si su contacto hace daño al jugador en este momento.</summary>
+    protected virtual bool CanHurtPlayer => true;
 
     // ── Lifecycle ────────────────────────────────────────────────────────────
 
@@ -59,8 +77,9 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     /// </summary>
     protected virtual void OnEnable()
     {
-        currentHealth = maxHealth;
+        ResetHealth(maxHealth);
         released = false;
+        lastHitWasArea = false;
 
         if (visualFeedback != null)
         {
@@ -97,10 +116,25 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     // Unity despache N callbacks managed supera al del propio movimiento.
     // EnemyManager recorre la lista de activos y llama a estos métodos.
 
-    public void Tick(float deltaTime)
+    public void Tick(float deltaTime, float speedMultiplier = 1f)
     {
         if (released) return;
         UpdateMovement(deltaTime);
+
+        // UpdateMovement reescribe la velocidad en cada paso: el Overtime la escala después.
+        if (speedMultiplier != 1f && !released) rb.linearVelocity *= speedMultiplier;
+    }
+
+    /// <summary>
+    /// Vida al salir del pool, escalada por el Overtime. Sólo afecta a los que aparecen
+    /// a partir de ahí: los que ya estaban vivos no cambian a mitad de pelea.
+    /// </summary>
+    protected void ResetHealth(int baseHealth)
+    {
+        float multiplier = SpawnManager.Instance != null ? SpawnManager.Instance.OvertimeHealthMultiplier : 1f;
+        // Redondeo, no techo: con CeilToInt el rebaño pasaba de 1 a 2 HP en el primer nivel.
+        healthCap = Mathf.Max(1, Mathf.RoundToInt(baseHealth * multiplier));
+        currentHealth = healthCap;
     }
 
     public void TickVisuals(float deltaTime)
@@ -111,6 +145,21 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     public void Halt()
     {
         if (rb != null) rb.linearVelocity = Vector2.zero;
+    }
+
+    /// <summary>
+    /// Magnetismo: se suma después de UpdateMovement, que reescribe la velocidad en cada
+    /// paso. Así también arrastra a los que mantienen distancia (tirador, élite).
+    /// </summary>
+    public void ApplyPull(float strength, float radius)
+    {
+        if (released || playerTransform == null) return;
+
+        Vector2 toPlayer = (Vector2)playerTransform.position - rb.position;
+        float distanceSqr = toPlayer.sqrMagnitude;
+        if (distanceSqr > radius * radius || distanceSqr < 0.01f) return;
+
+        rb.linearVelocity += toPlayer / Mathf.Sqrt(distanceSqr) * strength;
     }
 
     /// <summary>
@@ -158,16 +207,47 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     /// <summary>
     /// Llamado por PlayerCombat cuando el ataque automático alcanza a este enemigo.
     /// </summary>
-    public virtual void OnHit(int damageAmount)
+    public void OnHit(int damageAmount)
+    {
+        OnHit(damageAmount, true);
+    }
+
+    /// <summary>Recupera vida sin pasar del máximo. Devuelve false si no hacía falta.</summary>
+    public bool Heal(int amount)
+    {
+        if (released || currentHealth >= healthCap) return false;
+        currentHealth = Mathf.Min(healthCap, currentHealth + amount);
+        return true;
+    }
+
+    /// <summary>Cambia el color hasta que vuelva al pool (OnEnable restaura baseColor).</summary>
+    public void SetTint(Color color)
+    {
+        if (visualFeedback != null) visualFeedback.SetBaseColor(color);
+    }
+
+    /// <summary>Daño a distancia (explosiones): respeta las i-frames como el contacto.</summary>
+    protected void DamagePlayer(float amount)
+    {
+        if (cachedPlayerCombat == null && playerTransform != null)
+            cachedPlayerCombat = playerTransform.GetComponent<PlayerCombat>();
+
+        if (cachedPlayerCombat != null)
+            cachedPlayerCombat.TakeDamageFromEnemy(amount);
+    }
+
+    /// <param name="showBeam">false para daño en área: el golpe no sale del jugador.</param>
+    public virtual void OnHit(int damageAmount, bool showBeam)
     {
         if (released) return;
 
         currentHealth -= damageAmount;
+        lastHitWasArea = !showBeam;
 
         if (damageFeedback != null) damageFeedback.PlayFeedbacks();
         if (visualFeedback != null) visualFeedback.TriggerHitFlash();
 
-        if (playerTransform != null && ownCollider != null && HitVFXManager.Instance != null)
+        if (showBeam && playerTransform != null && ownCollider != null && HitVFXManager.Instance != null)
         {
             Vector3 hitPoint = ownCollider.ClosestPoint(playerTransform.position);
             HitVFXManager.Instance.SpawnBeam(playerTransform, hitPoint);
@@ -191,7 +271,7 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     /// Muerte desde fuera (consumible de limpieza de pantalla): cuenta como baja pero
     /// no otorga tiempo ni suelta consumible para no encadenar drops infinitos.
     /// </summary>
-    public void KillByConsumable()
+    public virtual void KillByConsumable()
     {
         Die(giveReward: false, isKill: true);
     }
@@ -211,13 +291,21 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
         // 1. Suma tiempo al jugador
         if (giveReward && TimeManager.Instance != null)
         {
-            TimeManager.Instance.AddTime(timeRewardOnDeath);
+            // Reloj voraz y Cadena temporal modifican la recompensa; Fragmentación
+            // encola aquí la explosión de esta muerte.
+            float reward = UpgradeManager.Instance != null
+                ? UpgradeManager.Instance.ResolveKillReward(timeRewardOnDeath, deathPosition)
+                : timeRewardOnDeath;
+            TimeManager.Instance.AddTime(reward);
             if (AudioManager.Instance != null) AudioManager.Instance.PlayTimeGainSFX();
             if (ParticleManager.Instance != null) ParticleManager.Instance.SpawnTimeGainParticles(deathPosition);
         }
 
         // 1b. Recompensa de consumible: sólo en bajas reales del jugador (no kamikaze)
-        if (giveReward && PickupManager.Instance != null)
+        // Sólo bajas directas: las explosiones en cadena (bombardero, fragmentación, onda)
+        // matan decenas a la vez y la lluvia de consumibles traía un "limpiar pantalla"
+        // tras otro. El élite suelta el suyo siempre.
+        if (giveReward && (isElite || !lastHitWasArea) && PickupManager.Instance != null)
         {
             PickupManager.Instance.RollDrop(deathPosition, isElite);
         }
@@ -260,7 +348,7 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
 
     private void HandlePlayerContact(Collider2D other)
     {
-        if (released || !other.CompareTag("Player")) return;
+        if (released || !CanHurtPlayer || !other.CompareTag("Player")) return;
 
         // OnTriggerStay2D dispara cada paso de física por cada enemigo en contacto:
         // resolvemos el PlayerCombat una sola vez y lo reutilizamos.

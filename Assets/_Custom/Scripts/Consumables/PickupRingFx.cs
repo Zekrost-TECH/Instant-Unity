@@ -24,9 +24,10 @@ public class PickupRingFx : MonoBehaviour
         if (spriteRenderer != null) spriteRenderer.color = baseColor;
     }
 
-    public void Setup(Color color)
+    public void Setup(Color color, float targetScale)
     {
         baseColor = color;
+        maxScale = targetScale;
         elapsed = 0f;
         transform.localScale = Vector3.zero;
         if (spriteRenderer != null) spriteRenderer.color = color;

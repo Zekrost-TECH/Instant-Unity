@@ -22,6 +22,17 @@ public class PlayerCombat : MonoBehaviour
     [Tooltip("Feedback al recibir daño de un enemigo o proyectil (Screen Shake, flash rojo).")]
     public MMF_Player takeDamageFeedback;
 
+    [Header("Upgrades de dash")]
+    [Tooltip("Radio de la Onda de dash a nivel 1.")]
+    public float dashWaveRadius = 2.2f;
+    [Tooltip("Radio extra por cada vez que se repite la Onda de dash.")]
+    public float dashWaveRadiusPerLevel = 0.5f;
+    public Color dashWaveColor = new Color(0.53f, 0.8f, 1f, 1f); // #88CCFF
+    [Tooltip("Radio de la Zona muerta a nivel 1 (GDD: 1.2).")]
+    public float deadZoneRadius = 1.2f;
+    [Tooltip("Segundos que dura cada Zona muerta.")]
+    public float deadZoneDuration = 2f;
+
     [Header("Gizmos")]
     public Color rangeGizmoColor = new Color(1f, 0.4f, 0f, 0.35f);
 
@@ -44,9 +55,15 @@ public class PlayerCombat : MonoBehaviour
     private bool tripleShotActive;
     private float tripleShotTimer;
 
+    // Upgrades de dash de la partida actual (0 = no adquirido)
+    private int dashWaveLevel;
+    private int deadZoneLevel;
+    private readonly List<ToxicZone> deadZones = new List<ToxicZone>(4);
+
     private void Awake()
     {
         movement = GetComponent<PlayerMovement>();
+        movement.OnDashStarted += HandleDashStarted;
 
         // Igual que en PlayerMovement: capturar en Awake, no en Start. El arranque de
         // partida desde sceneLoaded llama a ResetState() antes de Start, y con los bases
@@ -151,7 +168,11 @@ public class PlayerCombat : MonoBehaviour
                 hitAny = true;
             }
 
-            if (hitAny && hitEnemyFeedback != null) hitEnemyFeedback.PlayFeedbacks();
+            if (hitAny)
+            {
+                if (hitEnemyFeedback != null) hitEnemyFeedback.PlayFeedbacks();
+                AudioManager.Instance?.PlayHitSFX();
+            }
             return;
         }
 
@@ -164,6 +185,7 @@ public class PlayerCombat : MonoBehaviour
 
             // Jugar GameFeel: Hit-Stop, sonido de hit
             if (hitEnemyFeedback != null) hitEnemyFeedback.PlayFeedbacks();
+            AudioManager.Instance?.PlayHitSFX();
         }
     }
 
@@ -173,6 +195,7 @@ public class PlayerCombat : MonoBehaviour
         if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameManager.GameState.Playing) return false;
 
         float damageToApply = customDamage > 0f ? customDamage : hitTimePenalty;
+        if (SpawnManager.Instance != null) damageToApply *= SpawnManager.Instance.OvertimeHitPenaltyMultiplier;
         float timeLost = TimeManager.Instance != null
             ? TimeManager.Instance.SubtractTime(damageToApply)
             : damageToApply;
@@ -183,10 +206,58 @@ public class PlayerCombat : MonoBehaviour
         // Jugar GameFeel: Screen Shake, impacto visual fuerte
         if (takeDamageFeedback != null) takeDamageFeedback.PlayFeedbacks();
 
+        AudioManager.Instance?.PlayHurtSFX();
         HapticManager.Instance?.TriggerDamage();
 
         //Debug.Log($"¡Ouch! Te golpearon. -{damageToApply}s");
         return true;
+    }
+
+    private void OnDestroy()
+    {
+        if (movement != null) movement.OnDashStarted -= HandleDashStarted;
+    }
+
+    public void AddDashWaveLevel()
+    {
+        dashWaveLevel++;
+    }
+
+    public void AddDeadZoneLevel()
+    {
+        deadZoneLevel++;
+    }
+
+    private void HandleDashStarted(Vector2 origin, Vector2 direction)
+    {
+        if (dashWaveLevel > 0 && EnemyManager.Instance != null)
+        {
+            float radius = dashWaveRadius + dashWaveRadiusPerLevel * (dashWaveLevel - 1);
+            EnemyManager.Instance.DamageEnemiesInRadius(origin, radius, attackDamage);
+            PickupManager.Instance?.SpawnRing(origin, dashWaveColor, radius);
+        }
+
+        if (deadZoneLevel > 0)
+        {
+            // Cada nivel extra agranda la zona un 25%.
+            float radius = deadZoneRadius * (1f + 0.25f * (deadZoneLevel - 1));
+            GetFreeDeadZone().Activate(origin, radius, attackDamage, deadZoneDuration);
+        }
+    }
+
+    /// <summary>
+    /// Pool mínimo: con un dash cada ~1s y zonas de 2s nunca hay más de 2-3 vivas.
+    /// </summary>
+    private ToxicZone GetFreeDeadZone()
+    {
+        for (int i = 0; i < deadZones.Count; i++)
+        {
+            if (deadZones[i] != null && !deadZones[i].gameObject.activeSelf) return deadZones[i];
+        }
+
+        ToxicZone zone = ToxicZone.Create();
+        deadZones.Add(zone);
+        return zone;
     }
 
     public void ApplyAttackSpeedBoost(float multiplier, float duration)
@@ -213,6 +284,12 @@ public class PlayerCombat : MonoBehaviour
         DamageTakenCount = 0;
         lastRange = attackRange;
         attackTimer = 0f;
+        dashWaveLevel = 0;
+        deadZoneLevel = 0;
+        for (int i = 0; i < deadZones.Count; i++)
+        {
+            if (deadZones[i] != null) deadZones[i].gameObject.SetActive(false);
+        }
         UpdateRangeVisual();
     }
 

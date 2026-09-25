@@ -19,3 +19,4 @@ MonoBehaviour:
   isRare: 0
   type: 1
   value: 0.5
+  maxStacks: 4

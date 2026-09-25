@@ -113,7 +113,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 75f5f34dc1b5347e0b8351032682f224, type: 3}
-  m_Color: {r: 0.754717, g: 0.18867925, b: 0.18867925, a: 1}
+  m_Color: {r: 1, g: 0.13333334, b: 0.4, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -190,12 +190,14 @@ MonoBehaviour:
   isElite: 0
   dieOnContactWithPlayer: 0
   damageFeedback: {fileID: 0}
-  baseColor: {r: 1, g: 0, b: 0, a: 1}
+  baseColor: {r: 1, g: 0.13333334, b: 0.4, a: 1}
   deathParticleCount: 8
   moveSpeed: 2
   shootCooldown: 3
   stoppingDistance: 5
   retreatDistance: 3
+  phase2StartTime: 150
+  phase2CooldownMultiplier: 0.75
 --- !u!114 &4010999200121862733
 MonoBehaviour:
   m_ObjectHideFlags: 0

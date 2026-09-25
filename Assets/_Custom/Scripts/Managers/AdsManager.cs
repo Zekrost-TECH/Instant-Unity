@@ -32,8 +32,15 @@ public class AdsManager : MonoBehaviour
     public bool useStubInEditor = true;
     [Tooltip("Segundos que simula durar el anuncio del stub.")]
     public float adDurationStub = 1f;
-    [Tooltip("Segundos a esperar la resolución del anuncio (close/fail) antes de fallar por seguridad.")]
-    public float showTimeoutSeconds = 60f;
+
+    [Header("Robustez")]
+    [Tooltip("Segundos máximos entre pedir el anuncio y que se abra (o falle). Una vez abierto no hay límite: el jugador puede quedarse en la pantalla final lo que quiera.")]
+    public float openTimeoutSeconds = 10f;
+    [Tooltip("Margen para que llegue la recompensa si el SDK avisa del cierre antes que de ella.")]
+    public float rewardGraceSeconds = 1f;
+    [Tooltip("Espera inicial (s) para reintentar la carga tras un fallo; se duplica en cada fallo hasta el máximo.")]
+    public float retryDelayMin = 10f;
+    public float retryDelayMax = 60f;
 
     /// <summary>
     /// Ciclo de vida de un anuncio recompensado. Sólo se muestra en Ready y nunca se
@@ -52,6 +59,10 @@ public class AdsManager : MonoBehaviour
     private bool resolvePending;
     private bool lastNotifiedReady;
     private float showWatchdogTimer = -1f;
+    private bool awaitingRewardAfterClose;
+    private bool sdkInitialized;
+    private float retryTimer = -1f;
+    private float nextRetryDelay;
 
     // ── Dispatcher al hilo main ─────────────────────────────────────────────
     // El SDK de AdMob invoca varios callbacks (Load, Show, cierre, fallo) desde un
@@ -102,12 +113,16 @@ public class AdsManager : MonoBehaviour
         }
 
 #if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+        // En iOS Unity sigue corriendo bajo el anuncio (música incluida): así se pausa
+        // igual que en Android. No hace nada en otras plataformas.
+        MobileAds.SetiOSAppPauseOnBackground(true);
         MobileAdsEventExecutor.Initialize();
         MobileAds.Initialize(status =>
         {
             RunOnMainThread(() =>
             {
                 Debug.Log("[AdsManager] AdMob inicializado.");
+                sdkInitialized = true;
                 LoadRewardedAd();
             });
         });
@@ -118,13 +133,35 @@ public class AdsManager : MonoBehaviour
     {
         DrainMainThreadQueue();
 
+        // Tope por frame: al volver de la pausa del anuncio el primer delta puede ser
+        // de decenas de segundos y dispararía los temporizadores de golpe.
+        float deltaTime = Mathf.Min(Time.unscaledDeltaTime, 0.25f);
+
+#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+        if (retryTimer > 0f)
+        {
+            retryTimer -= deltaTime;
+            if (retryTimer <= 0f)
+            {
+                retryTimer = -1f;
+                LoadRewardedAd();
+            }
+        }
+#endif
+
         if (showWatchdogTimer <= 0f) return;
-        showWatchdogTimer -= Time.unscaledDeltaTime;
+        showWatchdogTimer -= deltaTime;
         if (showWatchdogTimer > 0f) return;
 
         showWatchdogTimer = -1f;
-        Debug.LogWarning("[AdsManager] Watchdog: el anuncio no se resolvió a tiempo; se aborta la solicitud.");
-        Resolve(success: false);
+        if (awaitingRewardAfterClose)
+        {
+            FinishShownAd(rewardEarnedThisAd);
+            return;
+        }
+
+        Debug.LogWarning("[AdsManager] Watchdog: el anuncio no llegó a abrirse; se aborta la solicitud.");
+        FinishShownAd(false);
     }
 
     /// <summary>
@@ -225,6 +262,7 @@ public class AdsManager : MonoBehaviour
         onFailedCallback = onFailed;
         grantCronosOnReward = grantCronos;
         rewardEarnedThisAd = false;
+        awaitingRewardAfterClose = false;
         resolvePending = true;
         showWatchdogTimer = -1f;
 
@@ -247,7 +285,8 @@ public class AdsManager : MonoBehaviour
         }
 
         FlowState = AdFlowState.Showing;
-        showWatchdogTimer = showTimeoutSeconds;
+        // Sólo vigila hasta que el anuncio se abre (HandleFullScreenContentOpened).
+        showWatchdogTimer = openTimeoutSeconds;
 
         rewardedAd.Show(reward =>
         {
@@ -258,6 +297,9 @@ public class AdsManager : MonoBehaviour
                 // reanudar la partida con el anuncio aún en pantalla.
                 rewardEarnedThisAd = true;
                 Debug.Log($"[AdsManager] Recompensa ganada: {reward.Amount} {reward.Type}");
+
+                // El cierre llegó primero y estaba esperando a esta confirmación.
+                if (awaitingRewardAfterClose) FinishShownAd(true);
             });
         });
         return true;
@@ -269,9 +311,23 @@ public class AdsManager : MonoBehaviour
 
     private void GrantStubReward()
     {
-        Resolve(success: true);
         // Igual que en el flujo real: recargar para poder volver a revivir en el Editor.
-        RunOnMainThread(LoadRewardedAd);
+        FinishShownAd(true);
+    }
+
+    /// <summary>
+    /// Pide otro anuncio si no hay uno listo ni cargando (p. ej. al abrirse el Game Over
+    /// después de varios fallos de carga). Anula la espera de reintento pendiente.
+    /// </summary>
+    public void EnsureLoaded()
+    {
+#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+        if (UseStub || !sdkInitialized) return;
+        if (FlowState != AdFlowState.Idle) return;
+
+        retryTimer = -1f;
+        LoadRewardedAd();
+#endif
     }
 
     // ── AdMob ────────────────────────────────────────────────────────────────
@@ -305,39 +361,64 @@ public class AdsManager : MonoBehaviour
             Debug.LogWarning("[AdsManager] Falló la carga del recompensado: " + (error != null ? error.GetMessage() : "sin instancia"));
             FlowState = AdFlowState.Idle;
             NotifyAdReady(false);
+            ScheduleRetry();
             return;
         }
 
+        nextRetryDelay = 0f;
         rewardedAd = ad;
         RegisterAdEvents(ad);
         NotifyAdReady(true);
+    }
+
+    /// <summary>
+    /// Sin reintento, un solo fallo de carga (sin red al abrir la app, sin inventario)
+    /// dejaba el revivir sin anuncio toda la sesión: nadie volvía a pedirlo.
+    /// Espera creciente (10s, 20s, 40s...) para no martillear al SDK.
+    /// </summary>
+    private void ScheduleRetry()
+    {
+        retryTimer = nextRetryDelay > 0f ? nextRetryDelay : retryDelayMin;
+        nextRetryDelay = Mathf.Min(retryTimer * 2f, retryDelayMax);
     }
 
     private void RegisterAdEvents(RewardedAd ad)
     {
         // Todos los eventos se reenvían al hilo main: cerrar el anuncio no puede
         // fallar a mitad de camino por culpa de un hilo equivocado.
+        ad.OnAdFullScreenContentOpened += () => RunOnMainThread(HandleFullScreenContentOpened);
         ad.OnAdFullScreenContentClosed += () => RunOnMainThread(HandleFullScreenContentClosed);
         ad.OnAdFullScreenContentFailed += adError => RunOnMainThread(() => HandleFullScreenContentFailed(adError));
+    }
+
+    private void HandleFullScreenContentOpened()
+    {
+        // Abierto: a partir de aquí manda el cierre del SDK, no un temporizador.
+        if (resolvePending && !awaitingRewardAfterClose) showWatchdogTimer = -1f;
     }
 
     private void HandleFullScreenContentClosed()
     {
         // Validación de recompensa: sólo se revive si el SDK confirmó que el jugador
         // vio el anuncio hasta el final Y éste se cerró. Cerrar sin recompensa es fail.
-        Resolve(success: rewardEarnedThisAd);
+        if (rewardEarnedThisAd || !resolvePending)
+        {
+            FinishShownAd(rewardEarnedThisAd);
+            return;
+        }
 
-        // La precarga se difiere al hilo main fuera del evento nativo: destruir el
-        // RewardedAd dentro de su propio callback de cierre puede romper el SDK.
-        RunOnMainThread(LoadRewardedAd);
+        // Algunos SDK/mediaciones avisan del cierre antes que de la recompensa:
+        // se espera un momento antes de darlo por no visto.
+        awaitingRewardAfterClose = true;
+        showWatchdogTimer = rewardGraceSeconds;
     }
 
     private void HandleFullScreenContentFailed(AdError adError)
     {
         Debug.LogWarning("[AdsManager] El anuncio no pudo mostrarse: " + adError.GetMessage());
-        Resolve(success: false);
-        RunOnMainThread(LoadRewardedAd);
+        FinishShownAd(false);
     }
+
 
     private void DestroyRewardedAd()
     {
@@ -350,6 +431,19 @@ public class AdsManager : MonoBehaviour
     // ── Resolución ───────────────────────────────────────────────────────────
 
     /// <summary>
+    /// Cierra la solicitud de un anuncio que llegó a pedirse al SDK y precarga el
+    /// siguiente. La precarga se difiere: destruir el RewardedAd dentro de su propio
+    /// callback de cierre puede romper el SDK.
+    /// </summary>
+    private void FinishShownAd(bool success)
+    {
+        Resolve(success);
+#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+        RunOnMainThread(LoadRewardedAd);
+#endif
+    }
+
+    /// <summary>
     /// Resuelve la solicitud en curso EXACTAMENTE una vez (recompensa o fallo, nunca
     /// ambos, nunca ninguno). Garantiza que la UI que espera el anuncio siempre reciba
     /// una respuesta y no quede bloqueada.
@@ -359,6 +453,7 @@ public class AdsManager : MonoBehaviour
         if (!resolvePending) return;
         resolvePending = false;
         showWatchdogTimer = -1f;
+        awaitingRewardAfterClose = false;
 
         // El anuncio mostrado se consume: hasta que cargue el siguiente no hay más.
         FlowState = AdFlowState.Idle;

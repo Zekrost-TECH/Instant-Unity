@@ -14,6 +14,11 @@ public class UpgradeUIManager : MonoBehaviour
     public Image progressBar;
     public TextMeshProUGUI titleText;
 
+    [Header("Timer")]
+    public Color timerColor = new Color(0.3f, 0.9f, 1f);
+    [Tooltip("Color de la barra cuando quedan menos de 3 segundos (GDD).")]
+    public Color timerUrgentColor = new Color(1f, 0.2f, 0.2f);
+
     private List<UpgradeCardUI> activeCards = new List<UpgradeCardUI>();
     private UpgradeResponsiveLayout responsiveLayout;
     private bool subscribed;
@@ -126,7 +131,11 @@ public class UpgradeUIManager : MonoBehaviour
     private void HandleUpgradeTimerChanged(float normalizedRemaining)
     {
         if (progressBar != null)
+        {
             progressBar.fillAmount = normalizedRemaining;
+            bool urgent = normalizedRemaining * UpgradeManager.UPGRADE_WINDOW_DURATION < 3f;
+            progressBar.color = urgent ? timerUrgentColor : timerColor;
+        }
 
         if (progressBarContainer != null)
             progressBarContainer.SetActive(normalizedRemaining > 0f);
